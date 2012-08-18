@@ -1,4 +1,5 @@
 *.py[co]
+*.swp
 
 # Packages
 *.egg
@@ -22,3 +23,8 @@ pip-log.txt
 
 #Translations
 *.mo
+
+# Other stuff
+cmp
+old
+setup.py

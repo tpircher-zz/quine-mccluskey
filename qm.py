@@ -1,4 +1,6 @@
-#  quine-mccluskey.py -- A Quine McCluskey Python implementation
+#!/usr/bin/env python
+
+#  qm.py -- A Quine McCluskey Python implementation
 #
 #  Copyright (c) 2006-2012  Thomas Pircher  <tehpeh@gmx.net>
 #
@@ -21,13 +23,15 @@
 #  IN THE SOFTWARE.
 
 
+
 """
-An implementation of the Quine McCluskey algorithm.
+The QM class minimises boolean functions using the Quine McCluskey algorithm.
+
+The resulting boolean function may contain XOR and XNOR operators.
 """
 
 from __future__ import print_function
 import math
-from array import array
 
 
 # Class QuineMcCluskey
@@ -44,8 +48,6 @@ class QuineMcCluskey:
         The class constructor.
         """
         self.n_bits = 0         # number of bits (i.e. self.n_bits == len(ones[i]) for every i)
-        self.ncomp_qm = 0       # number of comparisons (for profiling purposes)
-        self.ncomp_xor = 0      # number of comparisons (for profiling purposes)
 
 
     # function __num2str
@@ -55,29 +57,29 @@ class QuineMcCluskey:
         Convert an integer to its bit-representation in a string.
 
         Parameters:
-            i: the number to convert to the binary string.
+            i: the number to convert.
 
         Return:
-            The binary string of i.
+            The binary string representation of the parameter i.
         """
         x = ['1' if i & (1 << k) else '0' for k in range(self.n_bits - 1, -1, -1)]
         return "".join(x)
 
 
-    # function simplify_binary
+    # function simplify
     ###############################################################################
-    def simplify_binary(self, ones, dc = []):
+    def simplify(self, ones, dc = []):
         """
-        The simplification algorithm for binary input.
+        Simplify a list of terms.
 
         Parameters:
-            ones: list of numbers which have ones in the output,
+            ones: list of integers that describe when the output function is '1',
                 e.g. [1, 2, 6, 8, 15].
-            dc: list of numbers which we don't care if they have one or
+            dc: list of numbers for which we don't care if they have one or
                 zero in the output.
 
         Return:
-            see: simplify.
+            see: simplify_los.
 
         Example:
             ones = [2, 6, 10, 14]
@@ -93,32 +95,31 @@ class QuineMcCluskey:
             This will produce the ouput: ['--^^'].
             In other words, x = b1 ^ b0, (bit1 XOR bit0).
         """
-        s_all = ones + dc
-        if s_all == []:
+        terms = ones + dc
+        if len(terms) == 0:
             return None
 
         # Calculate the number of bits to use
         # Needed internally by __num2str()
-        self.n_bits = int(math.ceil(math.log(max(s_all) + 1, 2)))
+        self.n_bits = int(math.ceil(math.log(max(terms) + 1, 2)))
 
         # Generate the sets of ones and dontcares
-        s_ones = set(self.__num2str(i) for i in ones)
-        s_dc = set(self.__num2str(i) for i in dc)
+        ones = set(self.__num2str(i) for i in ones)
+        dc = set(self.__num2str(i) for i in dc)
 
-        return self.simplify(s_ones, s_dc)
+        return self.simplify_los(ones, dc)
 
 
-    # function simplify
+    # function simplify_los
     ###############################################################################
-    def simplify(self, s_ones, s_dc = []):
+    def simplify_los(self, ones, dc = []):
         """
         The simplification algorithm for string-encoded inputs.
 
         Parameters:
-            ones: set of the binary input strings,
+            ones: set of strings that describe when the output function is '1',
                 e.g. ['0001', '0010', '0110', '1000', '1111'].
-            dc: set of binary input strings for which we don't care if they
-                genrate a one or a zero in the output.
+            dc: set of strings that define the don't care combinations.
 
         Return:
             Returns a set of strings which represent the reduced minterms.
@@ -147,24 +148,27 @@ class QuineMcCluskey:
             This will produce the ouput: ['--^^'].
             In other words, x = b1 ^ b0, (bit1 XOR bit0).
         """
-        s_all = s_ones | s_dc
-        if len(s_all) == 0:
+        self.profile_cmp = 0    # number of comparisons (for profiling)
+        self.profile_xor = 0    # number of comparisons (for profiling)
+
+        terms = ones | dc
+        if len(terms) == 0:
             return None
 
         # Calculate the number of bits to use
-        self.n_bits = max(len(i) for i in s_all)
-        if self.n_bits != min(len(i) for i in s_all):
+        self.n_bits = max(len(i) for i in terms)
+        if self.n_bits != min(len(i) for i in terms):
             return None
 
         # First step of Quine-McCluskey method.
-        s_pi = self.__get_prime_implicants(s_all)
+        prime_implicants = self.__get_prime_implicants(terms)
 
         # Remove essential terms.
-        s_ei = self.__get_essential_implicants(s_pi, s_ones)
+        essential_implicants = self.__get_essential_implicants(prime_implicants)
         # Insert here the Quine McCluskey step 2: prime implicant chart.
         # Insert here Petrick's Method.
 
-        return s_ei
+        return essential_implicants
 
 
     # function __reduce_simple_xor_terms
@@ -176,21 +180,23 @@ class QuineMcCluskey:
         Return:
             the reduced term or None if the terms cannot be reduced.
         """
-        bit_dist = 0
+        difft10 = 0
+        difft20 = 0
         ret = []
-        for i in range(len(t1)):
-            if t1[i] == '^' or t2[i] == '^' or t1[i] == '~' or t2[i] == '~':
+        for (t1c, t2c) in zip(t1, t2):
+            if t1c == '^' or t2c == '^' or t1c == '~' or t2c == '~':
                 return None
-            elif t1[i] == t2[i]:
-                ret.append(t1[i])
-            elif t1[i] == '0' and t2[i] == '1' or t1[i] == '1' and t2[i] == '0':
+            elif t1c != t2c:
                 ret.append('^')
-                bit_dist = bit_dist + 1
+                if t2c == '0':
+                    difft10 += 1
+                else:
+                    difft20 += 1
             else:
-                return None
-        if bit_dist != 2:
-            return None
-        return "".join(ret)
+                ret.append(t1c)
+        if difft10 == 1 and difft20 == 1:
+            return "".join(ret)
+        return None
 
 
     # function __reduce_simple_xnor_terms
@@ -202,33 +208,35 @@ class QuineMcCluskey:
         Return:
             the reduced term or None if the terms cannot be reduced.
         """
-        bit_dist = 0
+        difft10 = 0
+        difft20 = 0
         ret = []
-        for i in range(len(t1)):
-            if t1[i] == '^' or t2[i] == '^' or t1[i] == '~' or t2[i] == '~':
+        for (t1c, t2c) in zip(t1, t2):
+            if t1c == '^' or t2c == '^' or t1c == '~' or t2c == '~':
                 return None
-            elif t1[i] == t2[i]:
-                ret.append(t1[i])
-            elif t1[i] == '0' and t2[i] == '1' or t1[i] == '1' and t2[i] == '0':
+            elif t1c != t2c:
                 ret.append('~')
-                bit_dist = bit_dist + 1
+                if t1c == '0':
+                    difft10 += 1
+                else:
+                    difft20 += 1
             else:
-                return None
-        if bit_dist != 2:
-            return None
-        return "".join(ret)
+                ret.append(t1c)
+        if (difft10 == 2 and difft20 == 0) or (difft10 == 0 and difft20 == 2):
+            return "".join(ret)
+        return None
 
 
     # function __get_prime_implicants
     ###############################################################################
-    def __get_prime_implicants(self, s_terms):
+    def __get_prime_implicants(self, terms):
         """
-        Simplify the set 's_terms'.
+        Simplify the set 'terms'.
         This is the very first step in the Quine McCluskey algorithm. This
         generates all prime implicants, whether they are redundant or not.
 
         Parameters:
-            s_terms: set of strings representing the minterms of ones and
+            terms: set of strings representing the minterms of ones and
             dontcares.
 
         Return:
@@ -238,133 +246,130 @@ class QuineMcCluskey:
 
         # Sort and remove duplicates.
         n_groups = self.n_bits + 1
-        s_marked = set()
+        marked = set()
 
-        # Group s_terms into l_groups.
-        # l_groups is a list of length n_groups.
-        # Each element of l_groups is a set of terms with the same number
+        # Group terms into the list groups.
+        # groups is a list of length n_groups.
+        # Each element of groups is a set of terms with the same number
         # of ones.  In other words, each term contained in the set
-        # l_groups[i] contains exactly i ones.
-        l_groups = [set() for i in range(n_groups)]
-        for t in s_terms:
+        # groups[i] contains exactly i ones.
+        groups = [set() for i in range(n_groups)]
+        for t in terms:
             n_bits = t.count('1')
-            l_groups[n_bits].add(t)
+            groups[n_bits].add(t)
         # Add 'simple' XOR and XNOR terms to the set of terms.
         # Simple means the terms can be obtained by combining just two
         # bits.
-        for gi, group in enumerate(l_groups):
+        for gi, group in enumerate(groups):
             for t1 in group:
                 for t2 in group:
                     t12 = self.__reduce_simple_xor_terms(t1, t2)
                     if t12 != None:
-                        s_terms.add(t12)
+                        terms.add(t12)
                 if gi < n_groups - 2:
-                    for t2 in l_groups[gi + 2]:
+                    for t2 in groups[gi + 2]:
                         t12 = self.__reduce_simple_xnor_terms(t1, t2)
                         if t12 != None:
-                            s_terms.add(t12)
+                            terms.add(t12)
 
         done = False
         while not done:
-            # Group s_terms into l_groups.
-            # l_groups is a list of length n_groups.
-            # Each element of l_groups is a set of terms with the same
+            # Group terms into groups.
+            # groups is a list of length n_groups.
+            # Each element of groups is a set of terms with the same
             # number of ones.  In other words, each term contained in the
-            # set l_groups[i] contains exactly i ones.
-            l_groups = [set() for i in range(3*n_groups)]
-            l_xor_groups = [set() for i in range(n_groups)]
-            l_xnor_groups = [set() for i in range(n_groups)]
-            for t in s_terms:
+            # set groups[i] contains exactly i ones.
+            groups = dict()
+            for t in terms:
                 n_ones = t.count('1')
                 n_xor  = t.count('^')
                 n_xnor = t.count('~')
-
-                gi = n_ones
                 # The algorithm can not cope with mixed XORs and XNORs in
                 # one expression.
                 assert n_xor == 0 or n_xnor == 0
-                if n_xor != 0:
-                    gi = gi + n_groups
-                    l_xor_groups[n_bits].add(t)
-                if n_xnor != 0:
-                    gi = gi + 2*n_groups
-                    l_xnor_groups[n_bits].add(t)
-                l_groups[gi].add(t)
 
-            s_terms = set()         # The set of new created terms
-            s_used = set()          # The set of used terms
-            for gi, group in enumerate(l_groups[:3*n_groups - 1]):
-                # Shortcut: skip this group if it is empty or if the next
-                # group is empty.
-                gv_next = l_groups[gi + 1]
-                if len(group) != 0 and len(gv_next) != 0:
-                    for t1 in group:
+                key = (n_ones, n_xor, n_xnor)
+                if key not in groups:
+                    groups[key] = set()
+                groups[key].add(t)
+
+            terms = set()           # The set of new created terms
+            used = set()            # The set of used terms
+            for key in groups:
+                key_next = (key[0]+1, key[1], key[2])
+                if key_next in groups:
+                    group_next = groups[key_next]
+                    for t1 in groups[key]:
                         # Optimisation:
                         # The Quine-McCluskey algorithm compares t1 with
                         # each element of the next group. (Normal approach)
                         # But in reality it is faster to construct all
                         # possible permutations of t1 by adding a '1' in
                         # opportune positions and check if this new term is
-                        # contained in the set l_groups[gi + 1].
-                        for i in range(self.n_bits):
-                            if t1[i] == '0':
-                                self.ncomp_qm = self.ncomp_qm + 1
+                        # contained in the set groups[key_next].
+                        for i, c1 in enumerate(t1):
+                            if c1 == '0':
+                                self.profile_cmp += 1
                                 t2 = t1[:i] + '1' + t1[i+1:]
-                                if t2 in gv_next:
+                                if t2 in group_next:
                                     t12 = t1[:i] + '-' + t1[i+1:]
-                                    s_used.add(t1)
-                                    s_used.add(t2)
-                                    s_terms.add(t12)
+                                    used.add(t1)
+                                    used.add(t2)
+                                    terms.add(t12)
 
-
-            # Find XOR and XNOR combinations
-            for gi, xor_group in enumerate(l_xor_groups):
-                xnor_group = l_xnor_groups[gi]
-                if len(xor_group) != 0 and len(xnor_group) != 0:
-                    for t1 in xor_group:
+            # Find XOR combinations
+            for key in [k for k in groups if k[1] > 0]:
+                key_complement = (key[0] + 1, key[2], key[1])
+                if key_complement in groups:
+                    for t1 in groups[key]:
                         t1_complement = t1.replace('^', '~')
-                        for i in range(self.n_bits):
-                            if t1[i] == '0':
-                                self.ncomp_xor = self.ncomp_xor + 1
+                        for i, c1 in enumerate(t1):
+                            if c1 == '0':
+                                self.profile_xor += 1
                                 t2 = t1_complement[:i] + '1' + t1_complement[i+1:]
-                                if t2 in xnor_group:
+                                if t2 in groups[key_complement]:
                                     t12 = t1[:i] + '^' + t1[i+1:]
-                                    s_used.add(t1)
-                                    s_used.add(t2)
-                                    s_terms.add(t12)
-                            if t1[i] == '1':
-                                self.ncomp_xor = self.ncomp_xor + 1
-                                t2 = t1_complement[:i] + '0' + t1_complement[i+1:]
-                                if t2 in xnor_group:
-                                    t12 = t1_complement[:i] + '~' + t1_complement[i+1:]
-                                    s_used.add(t1)
-                                    s_used.add(t2)
-                                    s_terms.add(t12)
+                                    used.add(t1)
+                                    terms.add(t12)
+            # Find XNOR combinations
+            for key in [k for k in groups if k[2] > 0]:
+                key_complement = (key[0] + 1, key[2], key[1])
+                if key_complement in groups:
+                    for t1 in groups[key]:
+                        t1_complement = t1.replace('~', '^')
+                        for i, c1 in enumerate(t1):
+                            if c1 == '0':
+                                self.profile_xor += 1
+                                t2 = t1_complement[:i] + '1' + t1_complement[i+1:]
+                                if t2 in groups[key_complement]:
+                                    t12 = t1[:i] + '~' + t1[i+1:]
+                                    used.add(t1)
+                                    terms.add(t12)
 
             # Add the unused terms to the list of marked terms
-            for group in l_groups:
-                s_marked |= group - s_used
+            for group in groups.values():
+                marked |= group - used
 
-            if len(s_used) == 0:
+            if len(used) == 0:
                 done = True
 
         # Prepare the list of prime implicants
-        s_pi = s_marked
-        for g in l_groups:
-            s_pi |= g
-        return s_pi
+        pi = marked
+        for g in groups.values():
+            pi |= g
+        return pi
 
 
     # function __get_essential_implicants
     ###############################################################################
-    def __get_essential_implicants(self, s_terms, s_ones):
+    def __get_essential_implicants(self, terms):
         """
-        Simplify the set 's_terms'.
+        Simplify the set 'terms'.
         This function is usually called after __get_prime_implicants and
         its objective is to remove non-essential minterms.
 
         Parameters:
-            s_terms: set of strings representing the minterms of ones and
+            terms: set of strings representing the minterms of ones and
             dontcares.
 
         Return:
@@ -375,32 +380,32 @@ class QuineMcCluskey:
             one single other term in the list.
         """
 
-        # Create all permutations for each term in s_terms.
+        # Create all permutations for each term in terms.
         perms = {}
-        for i in s_terms:
-            perms[i] = set(j for j in self.permutations(i))
+        for t in terms:
+            perms[t] = set(p for p in self.permutations(t))
 
         # Now group the remaining terms and see if any term can be covered
         # by a combination of terms.
         ei_range = set()
-        s_ei = set()
+        ei = set()
         groups = dict()
-        for i in s_terms:
-            n = self.__get_term_rank(i)
+        for t in terms:
+            n = self.__get_term_rank(t, len(perms[t]))
             if n not in groups:
                 groups[n] = set()
-            groups[n].add(i)
-        for i in sorted(groups.keys(), reverse=True):
-            for j in groups[i]:
-                if not perms[j] <= ei_range:
-                    s_ei.add(j)
-                    ei_range |= perms[j]
-        return s_ei
+            groups[n].add(t)
+        for t in sorted(groups.keys(), reverse=True):
+            for g in groups[t]:
+                if not perms[g] <= ei_range:
+                    ei.add(g)
+                    ei_range |= perms[g]
+        return ei
 
 
     # function __get_term_rank
     ###############################################################################
-    def __get_term_rank(self, term):
+    def __get_term_rank(self, term, term_range):
         """
         Calculate the "rank" of a term.
 
@@ -410,7 +415,7 @@ class QuineMcCluskey:
         Return:
             The "rank" of the term. This is a positive number or zero.
             If a term has all bits fixed '0's then its "rank" is 0. The
-            mode 'dontcares' and xor or xnor it contains, the higher its
+            more 'dontcares' and xor or xnor it contains, the higher its
             rank.
             A dontcare weights more than a xor, a xor weights more than a
             xnor, a xnor weights more than 1 and a 1 weights more than a 0.
@@ -428,7 +433,7 @@ class QuineMcCluskey:
                 n += 2
             elif t == "1":
                 n += 1
-        return n
+        return 4*term_range + n
 
 
     # function permutations
@@ -457,7 +462,8 @@ class QuineMcCluskey:
             The output strings contain only '0' and '1'.
 
         Example:
-            for i in permutations('1--^^'):
+            qm = QuineMcCluskey
+            for i in qm.permutations('1--^^'):
                 print(i)
 
         Algorithm description:
