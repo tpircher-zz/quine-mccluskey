@@ -85,7 +85,6 @@ def main():
             t1 = time.time()
             s_res = qm.simplify(ones, dontcares)
             t2 = time.time()
-            print('%10s took %0.3f ms' % ("crc_qm", (t2-t1)*1000.0))
         else:
             s_ones = generate_input(s_out)
             s_dontcares = set()
@@ -101,7 +100,7 @@ def main():
         print("ones:        %s" % pretty_ones)
         print("dontcares:   %s" % pretty_dontcares)
         print("res:         [%s]" % format_set(s_res))
-        print('time:        %0.3f ms, %d comparisons, %d XOR comparisons' % ((t2-t1)*1000.0, qm.profile_cmp, qm.profile_xor))
+        print('time:        %0.3f ms, %d comparisons, %d XOR and %d XNOR comparisons' % ((t2-t1)*1000.0, qm.profile_cmp, qm.profile_xor, qm.profile_xnor))
         if s_res != s_out:
             print("Error: test failed")
             print("expected:    [%s]" % format_set(s_out))

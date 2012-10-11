@@ -43,11 +43,12 @@ class QuineMcCluskey:
 
     # function __init__
     ###############################################################################
-    def __init__(self):
+    def __init__(self, use_xor = True):
         """
         The class constructor.
         """
-        self.n_bits = 0         # number of bits (i.e. self.n_bits == len(ones[i]) for every i)
+        self.use_xor = use_xor  # Whether or not to use XOR and XNOR operations.
+        self.n_bits = 0         # number of bits (i.e. self.n_bits == len(ones[i]) for every i).
 
 
     # function __num2str
@@ -114,10 +115,10 @@ class QuineMcCluskey:
     ###############################################################################
     def simplify_los(self, ones, dc = []):
         """
-        The simplification algorithm for string-encoded inputs.
+        The simplification algorithm for a list of string-encoded inputs.
 
         Parameters:
-            ones: set of strings that describe when the output function is '1',
+            ones: list of strings that describe when the output function is '1',
                 e.g. ['0001', '0010', '0110', '1000', '1111'].
             dc: set of strings that define the don't care combinations.
 
@@ -150,6 +151,7 @@ class QuineMcCluskey:
         """
         self.profile_cmp = 0    # number of comparisons (for profiling)
         self.profile_xor = 0    # number of comparisons (for profiling)
+        self.profile_xnor = 0   # number of comparisons (for profiling)
 
         terms = ones | dc
         if len(terms) == 0:
@@ -257,20 +259,21 @@ class QuineMcCluskey:
         for t in terms:
             n_bits = t.count('1')
             groups[n_bits].add(t)
-        # Add 'simple' XOR and XNOR terms to the set of terms.
-        # Simple means the terms can be obtained by combining just two
-        # bits.
-        for gi, group in enumerate(groups):
-            for t1 in group:
-                for t2 in group:
-                    t12 = self.__reduce_simple_xor_terms(t1, t2)
-                    if t12 != None:
-                        terms.add(t12)
-                if gi < n_groups - 2:
-                    for t2 in groups[gi + 2]:
-                        t12 = self.__reduce_simple_xnor_terms(t1, t2)
+        if self.use_xor:
+            # Add 'simple' XOR and XNOR terms to the set of terms.
+            # Simple means the terms can be obtained by combining just two
+            # bits.
+            for gi, group in enumerate(groups):
+                for t1 in group:
+                    for t2 in group:
+                        t12 = self.__reduce_simple_xor_terms(t1, t2)
                         if t12 != None:
                             terms.add(t12)
+                    if gi < n_groups - 2:
+                        for t2 in groups[gi + 2]:
+                            t12 = self.__reduce_simple_xnor_terms(t1, t2)
+                            if t12 != None:
+                                terms.add(t12)
 
         done = False
         while not done:
@@ -295,6 +298,8 @@ class QuineMcCluskey:
 
             terms = set()           # The set of new created terms
             used = set()            # The set of used terms
+
+            # Find prime implicants
             for key in groups:
                 key_next = (key[0]+1, key[1], key[2])
                 if key_next in groups:
@@ -339,7 +344,7 @@ class QuineMcCluskey:
                         t1_complement = t1.replace('~', '^')
                         for i, c1 in enumerate(t1):
                             if c1 == '0':
-                                self.profile_xor += 1
+                                self.profile_xnor += 1
                                 t2 = t1_complement[:i] + '1' + t1_complement[i+1:]
                                 if t2 in groups[key_complement]:
                                     t12 = t1[:i] + '~' + t1[i+1:]
