@@ -27,7 +27,8 @@
 """
 The QM class minimises boolean functions using the Quine McCluskey algorithm.
 
-The resulting boolean function may contain XOR and XNOR operators.
+If the class was instantiiated with the use_xor set to True, then the resulting
+boolean function may contain XOR and XNOR operators.
 """
 
 from __future__ import print_function
@@ -43,7 +44,7 @@ class QuineMcCluskey:
 
     # function __init__
     ###############################################################################
-    def __init__(self, use_xor = True):
+    def __init__(self, use_xor = False):
         """
         The class constructor.
         """

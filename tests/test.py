@@ -4,7 +4,8 @@ from __future__ import print_function
 import os
 import sys
 import time
-from qm import QuineMcCluskey
+# from qm import QuineMcCluskey
+from quine_mccluskey.qm import QuineMcCluskey
 
 
 # generate_input
@@ -44,7 +45,7 @@ def main():
     """
     Main function
     """
-    qm = QuineMcCluskey()
+    qm = QuineMcCluskey(use_xor = True)
 
     test_vector = [
         { 'res': set(['--^^']) },
@@ -96,7 +97,7 @@ def main():
             t2 = time.time()
 
 
-        print("")
+        print()
         print("ones:        %s" % pretty_ones)
         print("dontcares:   %s" % pretty_dontcares)
         print("res:         [%s]" % format_set(s_res))
@@ -106,6 +107,8 @@ def main():
             print("expected:    [%s]" % format_set(s_out))
             print("got:         [%s]" % format_set(s_res))
             return 1
+    print("\nTest OK.")
+    return 0
 
 if __name__ == "__main__":
     sys.exit(main())
