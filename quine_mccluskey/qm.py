@@ -23,12 +23,19 @@
 #  IN THE SOFTWARE.
 
 
+"""An implementation of the Quine McCluskey algorithm.
 
-"""
-The QM class minimises boolean functions using the Quine McCluskey algorithm.
+This implementation of the Quine McCluskey algorithm has no inherent limits
+(other than the calculation time) on the size of the inputs.
 
-If the class was instantiiated with the use_xor set to True, then the resulting
-boolean function may contain XOR and XNOR operators.
+Also, in the limited tests of the author of this module, this implementation is
+considerably faster than other public Python implementations for non-trivial
+inputs.
+
+Another unique feature of this implementation is the possibility to use the XOR
+and XNOR operators, in addition to the normal AND operator, to minimise the
+terms. This slows down the algorithm, but in some cases it can be a big win in
+terms of complexity of the output.
 """
 
 from __future__ import print_function
@@ -38,15 +45,23 @@ import math
 # Class QuineMcCluskey
 ###############################################################################
 class QuineMcCluskey:
-    """
-    The Quine McCluskey class.
+    """The Quine McCluskey class.
+
+    The QuineMcCluskey class minimises boolean functions using the Quine
+    McCluskey algorithm.
+
+    If the class was instantiiated with the use_xor set to True, then the
+    resulting boolean function may contain XOR and XNOR operators.
     """
 
     # function __init__
     ###############################################################################
     def __init__(self, use_xor = False):
-        """
-        The class constructor.
+        """The class constructor.
+
+        Kwargs:
+            use_xor (bool): if True, try to use XOR and XNOR operations to give
+            a more compact return.
         """
         self.use_xor = use_xor  # Whether or not to use XOR and XNOR operations.
         self.n_bits = 0         # number of bits (i.e. self.n_bits == len(ones[i]) for every i).
@@ -58,10 +73,10 @@ class QuineMcCluskey:
         """
         Convert an integer to its bit-representation in a string.
 
-        Parameters:
-            i: the number to convert.
+        Args:
+            i (int): the number to convert.
 
-        Return:
+        Returns:
             The binary string representation of the parameter i.
         """
         x = ['1' if i & (1 << k) else '0' for k in range(self.n_bits - 1, -1, -1)]
@@ -71,16 +86,17 @@ class QuineMcCluskey:
     # function simplify
     ###############################################################################
     def simplify(self, ones, dc = []):
-        """
-        Simplify a list of terms.
+        """Simplify a list of terms.
 
-        Parameters:
-            ones: list of integers that describe when the output function is '1',
-                e.g. [1, 2, 6, 8, 15].
-            dc: list of numbers for which we don't care if they have one or
-                zero in the output.
+        Args:
+            ones (list of int): list of integers that describe when the output
+            function is '1', e.g. [1, 2, 6, 8, 15].
 
-        Return:
+        Kwargs:
+            dc (list of int): list of numbers for which we don't care if they
+            have one or zero in the output.
+
+        Returns:
             see: simplify_los.
 
         Example:
@@ -115,20 +131,23 @@ class QuineMcCluskey:
     # function simplify_los
     ###############################################################################
     def simplify_los(self, ones, dc = []):
-        """
-        The simplification algorithm for a list of string-encoded inputs.
+        """The simplification algorithm for a list of string-encoded inputs.
 
-        Parameters:
-            ones: list of strings that describe when the output function is '1',
-                e.g. ['0001', '0010', '0110', '1000', '1111'].
-            dc: set of strings that define the don't care combinations.
+        Args:
+            ones (list of str): list of strings that describe when the output
+            function is '1', e.g. ['0001', '0010', '0110', '1000', '1111'].
 
-        Return:
-            Returns a set of strings which represent the reduced minterms.
-            The length of the strings is equal to the number of bits in the
-            input.  Character 0 of the output string stands for the most
-            significant bit, Character n - 1 (n is the number of bits)
-            stands for the least significant bit.
+        Kwargs:
+            dc: (list of str)set of strings that define the don't care
+            combinations.
+
+        Returns:
+            Returns a set of strings which represent the reduced minterms.  The
+            length of the strings is equal to the number of bits in the input.
+            Character 0 of the output string stands for the most significant
+            bit, Character n - 1 (n is the number of bits) stands for the least
+            significant bit.
+
             The following characters are allowed in the return string:
               '-' don't care: this bit can be either zero or one.
               '1' the bit must be one.
@@ -177,11 +196,14 @@ class QuineMcCluskey:
     # function __reduce_simple_xor_terms
     ###############################################################################
     def __reduce_simple_xor_terms(self, t1, t2):
-        """
-        Try to reduce two terms t1 and t2, by combining them as XOR terms.
+        """Try to reduce two terms t1 and t2, by combining them as XOR terms.
 
-        Return:
-            the reduced term or None if the terms cannot be reduced.
+        Args:
+            t1 (str): a term.
+            t2 (str): a term.
+
+        Returns:
+            The reduced term or None if the terms cannot be reduced.
         """
         difft10 = 0
         difft20 = 0
@@ -205,11 +227,14 @@ class QuineMcCluskey:
     # function __reduce_simple_xnor_terms
     ###############################################################################
     def __reduce_simple_xnor_terms(self, t1, t2):
-        """
-        Try to reduce two terms t1 and t2, by combining them as XNOR terms.
+        """Try to reduce two terms t1 and t2, by combining them as XNOR terms.
 
-        Return:
-            the reduced term or None if the terms cannot be reduced.
+        Args:
+            t1 (str): a term.
+            t2 (str): a term.
+
+        Returns:
+            The reduced term or None if the terms cannot be reduced.
         """
         difft10 = 0
         difft20 = 0
@@ -233,18 +258,18 @@ class QuineMcCluskey:
     # function __get_prime_implicants
     ###############################################################################
     def __get_prime_implicants(self, terms):
-        """
-        Simplify the set 'terms'.
+        """Simplify the set 'terms'.
+
+        Args:
+            terms (set of str): set of strings representing the minterms of
+            ones and dontcares.
+
+        Returns:
+            A list of prime implicants. These are the minterms that cannot be
+            reduced with step 1 of the Quine McCluskey method.
+
         This is the very first step in the Quine McCluskey algorithm. This
         generates all prime implicants, whether they are redundant or not.
-
-        Parameters:
-            terms: set of strings representing the minterms of ones and
-            dontcares.
-
-        Return:
-            a list of prime implicants. These are the minterms that cannot
-            be reduced with step 1 of the Quine McCluskey method.
         """
 
         # Sort and remove duplicates.
@@ -369,21 +394,21 @@ class QuineMcCluskey:
     # function __get_essential_implicants
     ###############################################################################
     def __get_essential_implicants(self, terms):
-        """
-        Simplify the set 'terms'.
-        This function is usually called after __get_prime_implicants and
-        its objective is to remove non-essential minterms.
+        """Simplify the set 'terms'.
 
-        Parameters:
-            terms: set of strings representing the minterms of ones and
-            dontcares.
+        Args:
+            terms (set of str): set of strings representing the minterms of
+            ones and dontcares.
 
-        Return:
-            a list of prime implicants. These are the minterms that cannot
-            be reduced with step 1 of the Quine McCluskey method.
+        Returns:
+            A list of prime implicants. These are the minterms that cannot be
+            reduced with step 1 of the Quine McCluskey method.
 
-            In reality this function omits all terms that can be covered by
-            one single other term in the list.
+        This function is usually called after __get_prime_implicants and its
+        objective is to remove non-essential minterms.
+
+        In reality this function omits all terms that can be covered by at
+        least one other term in the list.
         """
 
         # Create all permutations for each term in terms.
@@ -401,7 +426,7 @@ class QuineMcCluskey:
             if n not in groups:
                 groups[n] = set()
             groups[n].add(t)
-        for t in sorted(groups.keys(), reverse=True):
+        for t in sorted(groups.keys(), reverse = True):
             for g in groups[t]:
                 if not perms[g] <= ei_range:
                     ei.add(g)
@@ -412,22 +437,25 @@ class QuineMcCluskey:
     # function __get_term_rank
     ###############################################################################
     def __get_term_rank(self, term, term_range):
-        """
-        Calculate the "rank" of a term.
+        """Calculate the "rank" of a term.
 
-        Parameters:
-            term: one single term in string format.
+        Args:
+            term (str): one single term in string format.
 
-        Return:
-            The "rank" of the term. This is a positive number or zero.
-            If a term has all bits fixed '0's then its "rank" is 0. The
-            more 'dontcares' and xor or xnor it contains, the higher its
-            rank.
-            A dontcare weights more than a xor, a xor weights more than a
-            xnor, a xnor weights more than 1 and a 1 weights more than a 0.
+            term_range (int): the rank of the class of term.
 
-            This means, the rank of a term, the more desireable it is to
-            include this term in the final result.
+        Returns:
+            The "rank" of the term.
+        
+        The rank of a term is a positive number or zero.  If a term has all
+        bits fixed '0's then its "rank" is 0. The more 'dontcares' and xor or
+        xnor it contains, the higher its rank.
+
+        A dontcare weights more than a xor, a xor weights more than a xnor, a
+        xnor weights more than 1 and a 1 weights more than a 0.
+
+        This means, the higher rank of a term, the more desireable it is to
+        include this term in the final result.
         """
         n = 0
         for t in term:
@@ -445,14 +473,23 @@ class QuineMcCluskey:
     # function permutations
     ###############################################################################
     def permutations(self, value = ''):
-        """
-        Iterator to generate all possible values out of a string.
+        """Iterator to generate all possible values out of a string.
 
-        The operation performed by this generator function can be seen as
-        the inverse of binary minimisation methonds such as Karnaugh maps,
-        Quine McCluskey or Espresso.  It takes as input a minterm and
-        generates all possible maxterms from it.
-        Inputs and outputs are strings.
+        Args:
+            value (str): A string containing any of the above characters.
+
+        Returns:
+            The output strings contain only '0' and '1'.
+
+        Example:
+            qm = QuineMcCluskey
+            for i in qm.permutations('1--^^'):
+                print(i)
+
+        The operation performed by this generator function can be seen as the
+        inverse of binary minimisation methonds such as Karnaugh maps, Quine
+        McCluskey or Espresso.  It takes as input a minterm and generates all
+        possible maxterms from it.  Inputs and outputs are strings.
 
         Possible input characters:
             '0': the bit at this position will always be zero.
@@ -460,17 +497,6 @@ class QuineMcCluskey:
             '-': don't care: this bit can be zero or one.
             '^': all bits with the caret are XOR-ed together.
             '~': all bits with the tilde are XNOR-ed together.
-
-        Parameters:
-            A string containing any of the above characters.
-
-        Return:
-            The output strings contain only '0' and '1'.
-
-        Example:
-            qm = QuineMcCluskey
-            for i in qm.permutations('1--^^'):
-                print(i)
 
         Algorithm description:
             This lovely piece of spaghetti code generates all possibe
