@@ -53,6 +53,8 @@ class QuineMcCluskey:
     If the class was instantiiated with the use_xor set to True, then the
     resulting boolean function may contain XOR and XNOR operators.
     """
+    __version__ = "0.1"
+
 
     # function __init__
     ###############################################################################

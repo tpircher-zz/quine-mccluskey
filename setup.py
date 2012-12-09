@@ -1,24 +1,21 @@
 import os
 from setuptools import setup
+from quine_mccluskey import qm
 
-# Utility function to read the README file.
-# Used for the long_description.  It's nice, because now 1) we have a top level
-# README file and 2) it's easier to type in the README file than to put a raw
-# string in below ...
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+m = qm.QuineMcCluskey
 
 setup(
     name = "quine_mccluskey",
-    version = "0.1",
+    version = m.__version__,
     author = "Thomas Pircher",
     author_email = "tehpeh@gmx.net",
     description = ("An implementation of the Quine-McCluskey algorithm"),
     license = "BSD",
     keywords = "Quine McCluskey, XOR",
     url = "http://www.tty1.net/quine-mccluskey/",
+    download_url = 'http://www.tty1.net/quine-mccluskey/quine_mccluskey-%s.tar.gz' % m.__version__,
     packages=['quine_mccluskey', 'tests'],
-    long_description=read('README.md'),
+    long_description=open('README.md').read(),
     classifiers=[
         "Development Status :: 4 - Beta",
         "Topic :: Utilities",

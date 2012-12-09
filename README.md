@@ -12,5 +12,5 @@ inputs.
 
 Another unique feature of this implementation is the possibility to use the XOR
 and XNOR operators, in addition to the normal AND operator, to minimise the
-terms. This slows down the algorithm, but in some cases it can be a big win in
-terms of complexity of the output.
+terms. This slows down the algorithm, but in some cases the result can be much
+more compact than a sum of product.
