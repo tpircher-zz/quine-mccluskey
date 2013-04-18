@@ -13,12 +13,12 @@ setup(
     license = "BSD",
     keywords = "Quine McCluskey, XOR",
     url = "http://www.tty1.net/quine-mccluskey/",
-    download_url = 'http://www.tty1.net/quine-mccluskey/quine_mccluskey-%s.tar.gz' % m.__version__,
+    download_url = 'http://www.tty1.net/quine-mccluskey/quine_mccluskey-v%s.zip' % m.__version__,
     packages=['quine_mccluskey', 'tests'],
     long_description=open('README.md').read(),
     classifiers=[
         "Development Status :: 4 - Beta",
         "Topic :: Utilities",
-        "License :: OSI Approved :: BSD License",
+        "License :: OSI Approved :: MIT License",
     ],
 )
