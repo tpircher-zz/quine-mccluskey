@@ -2,7 +2,7 @@
 
 #  qm.py -- A Quine McCluskey Python implementation
 #
-#  Copyright (c) 2006-2012  Thomas Pircher  <tehpeh@gmx.net>
+#  Copyright (c) 2006-2013  Thomas Pircher  <tehpeh@gmx.net>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy
 #  of this software and associated documentation files (the "Software"), to
@@ -380,7 +380,7 @@ class QuineMcCluskey:
                                     terms.add(t12)
 
             # Add the unused terms to the list of marked terms
-            for group in groups.values():
+            for g in list(groups.values()):
                 marked |= group - used
 
             if len(used) == 0:
@@ -388,7 +388,7 @@ class QuineMcCluskey:
 
         # Prepare the list of prime implicants
         pi = marked
-        for g in groups.values():
+        for g in list(groups.values()):
             pi |= g
         return pi
 
@@ -428,7 +428,7 @@ class QuineMcCluskey:
             if n not in groups:
                 groups[n] = set()
             groups[n].add(t)
-        for t in sorted(groups.keys(), reverse = True):
+        for t in sorted(list(groups.keys()), reverse=True):
             for g in groups[t]:
                 if not perms[g] <= ei_range:
                     ei.add(g)
