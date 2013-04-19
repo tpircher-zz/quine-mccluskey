@@ -42,8 +42,6 @@ from __future__ import print_function
 import math
 
 
-# Class QuineMcCluskey
-###############################################################################
 class QuineMcCluskey:
     """The Quine McCluskey class.
 
@@ -56,8 +54,7 @@ class QuineMcCluskey:
     __version__ = "0.1"
 
 
-    # function __init__
-    ###############################################################################
+
     def __init__(self, use_xor = False):
         """The class constructor.
 
@@ -69,8 +66,7 @@ class QuineMcCluskey:
         self.n_bits = 0         # number of bits (i.e. self.n_bits == len(ones[i]) for every i).
 
 
-    # function __num2str
-    ###############################################################################
+
     def __num2str(self, i):
         """
         Convert an integer to its bit-representation in a string.
@@ -85,8 +81,7 @@ class QuineMcCluskey:
         return "".join(x)
 
 
-    # function simplify
-    ###############################################################################
+
     def simplify(self, ones, dc = []):
         """Simplify a list of terms.
 
@@ -130,8 +125,7 @@ class QuineMcCluskey:
         return self.simplify_los(ones, dc)
 
 
-    # function simplify_los
-    ###############################################################################
+
     def simplify_los(self, ones, dc = []):
         """The simplification algorithm for a list of string-encoded inputs.
 
@@ -195,8 +189,7 @@ class QuineMcCluskey:
         return essential_implicants
 
 
-    # function __reduce_simple_xor_terms
-    ###############################################################################
+
     def __reduce_simple_xor_terms(self, t1, t2):
         """Try to reduce two terms t1 and t2, by combining them as XOR terms.
 
@@ -226,8 +219,7 @@ class QuineMcCluskey:
         return None
 
 
-    # function __reduce_simple_xnor_terms
-    ###############################################################################
+
     def __reduce_simple_xnor_terms(self, t1, t2):
         """Try to reduce two terms t1 and t2, by combining them as XNOR terms.
 
@@ -257,8 +249,7 @@ class QuineMcCluskey:
         return None
 
 
-    # function __get_prime_implicants
-    ###############################################################################
+
     def __get_prime_implicants(self, terms):
         """Simplify the set 'terms'.
 
@@ -393,8 +384,7 @@ class QuineMcCluskey:
         return pi
 
 
-    # function __get_essential_implicants
-    ###############################################################################
+
     def __get_essential_implicants(self, terms):
         """Simplify the set 'terms'.
 
@@ -436,8 +426,7 @@ class QuineMcCluskey:
         return ei
 
 
-    # function __get_term_rank
-    ###############################################################################
+
     def __get_term_rank(self, term, term_range):
         """Calculate the "rank" of a term.
 
@@ -472,8 +461,7 @@ class QuineMcCluskey:
         return 4*term_range + n
 
 
-    # function permutations
-    ###############################################################################
+
     def permutations(self, value = ''):
         """Iterator to generate all possible values out of a string.
 
@@ -484,7 +472,8 @@ class QuineMcCluskey:
             The output strings contain only '0' and '1'.
 
         Example:
-            qm = QuineMcCluskey
+            from qm import QuineMcCluskey
+            qm = QuineMcCluskey()
             for i in qm.permutations('1--^^'):
                 print(i)
 
