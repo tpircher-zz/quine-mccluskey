@@ -372,7 +372,7 @@ class QuineMcCluskey:
 
             # Add the unused terms to the list of marked terms
             for g in list(groups.values()):
-                marked |= group - used
+                marked |= g - used
 
             if len(used) == 0:
                 done = True
