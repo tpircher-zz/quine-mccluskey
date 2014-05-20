@@ -182,7 +182,9 @@ class QuineMcCluskey:
         prime_implicants = self.__get_prime_implicants(terms)
 
         # Remove essential terms.
-        essential_implicants = self.__get_essential_implicants(prime_implicants)
+        essential_implicants = \
+                             self.__get_essential_implicants(prime_implicants, \
+                                                             set(dc))
         # Insert here the Quine McCluskey step 2: prime implicant chart.
         # Insert here Petrick's Method.
 
@@ -385,12 +387,13 @@ class QuineMcCluskey:
 
 
 
-    def __get_essential_implicants(self, terms):
+    def __get_essential_implicants(self, terms, dc):
         """Simplify the set 'terms'.
 
         Args:
             terms (set of str): set of strings representing the minterms of
             ones and dontcares.
+            dc (set of str): set of strings representing the dontcares.
 
         Returns:
             A list of prime implicants. These are the minterms that cannot be
@@ -406,7 +409,7 @@ class QuineMcCluskey:
         # Create all permutations for each term in terms.
         perms = {}
         for t in terms:
-            perms[t] = set(p for p in self.permutations(t))
+            perms[t] = set(p for p in self.permutations(t) if p not in dc) 
 
         # Now group the remaining terms and see if any term can be covered
         # by a combination of terms.
