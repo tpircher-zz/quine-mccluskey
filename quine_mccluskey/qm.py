@@ -182,9 +182,7 @@ class QuineMcCluskey:
         prime_implicants = self.__get_prime_implicants(terms)
 
         # Remove essential terms.
-        essential_implicants = \
-                             self.__get_essential_implicants(prime_implicants, \
-                                                             set(dc))
+        essential_implicants = self.__get_essential_implicants(prime_implicants, set(dc))
         # Insert here the Quine McCluskey step 2: prime implicant chart.
         # Insert here Petrick's Method.
 
@@ -409,7 +407,7 @@ class QuineMcCluskey:
         # Create all permutations for each term in terms.
         perms = {}
         for t in terms:
-            perms[t] = set(p for p in self.permutations(t) if p not in dc) 
+            perms[t] = set(p for p in self.permutations(t) if p not in dc)
 
         # Now group the remaining terms and see if any term can be covered
         # by a combination of terms.
@@ -426,6 +424,8 @@ class QuineMcCluskey:
                 if not perms[g] <= ei_range:
                     ei.add(g)
                     ei_range |= perms[g]
+        if len(ei) == 0:
+            ei = set(['-' * self.n_bits])
         return ei
 
 
@@ -440,7 +440,7 @@ class QuineMcCluskey:
 
         Returns:
             The "rank" of the term.
-        
+
         The rank of a term is a positive number or zero.  If a term has all
         bits fixed '0's then its "rank" is 0. The more 'dontcares' and xor or
         xnor it contains, the higher its rank.
