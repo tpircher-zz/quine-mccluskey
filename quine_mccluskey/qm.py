@@ -2,7 +2,7 @@
 
 #  qm.py -- A Quine McCluskey Python implementation
 #
-#  Copyright (c) 2006-2013  Thomas Pircher  <tehpeh@gmx.net>
+#  Copyright (c) 2006-2016  Thomas Pircher  <tehpeh@gmx.net>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy
 #  of this software and associated documentation files (the "Software"), to
@@ -82,7 +82,7 @@ class QuineMcCluskey:
 
 
 
-    def simplify(self, ones, dc = []):
+    def simplify(self, ones, dc = [], num_bits = None):
         """Simplify a list of terms.
 
         Args:
@@ -116,7 +116,10 @@ class QuineMcCluskey:
 
         # Calculate the number of bits to use
         # Needed internally by __num2str()
-        self.n_bits = int(math.ceil(math.log(max(terms) + 1, 2)))
+        if num_bits is not None:
+            self.n_bits = num_bits
+        else:
+            self.n_bits = int(math.ceil(math.log(max(terms) + 1, 2)))
 
         # Generate the sets of ones and dontcares
         ones = set(self.__num2str(i) for i in ones)
@@ -126,7 +129,7 @@ class QuineMcCluskey:
 
 
 
-    def simplify_los(self, ones, dc = []):
+    def simplify_los(self, ones, dc = [], num_bits = None):
         """The simplification algorithm for a list of string-encoded inputs.
 
         Args:
@@ -174,9 +177,12 @@ class QuineMcCluskey:
             return None
 
         # Calculate the number of bits to use
-        self.n_bits = max(len(i) for i in terms)
-        if self.n_bits != min(len(i) for i in terms):
-            return None
+        if num_bits is not None:
+            self.n_bits = num_bits
+        else:
+            self.n_bits = max(len(i) for i in terms)
+            if self.n_bits != min(len(i) for i in terms):
+                return None
 
         # First step of Quine-McCluskey method.
         prime_implicants = self.__get_prime_implicants(terms)

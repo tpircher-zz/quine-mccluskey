@@ -4,7 +4,7 @@ from __future__ import print_function
 import os
 import sys
 import time
-# from qm import QuineMcCluskey
+#from qm import QuineMcCluskey
 from quine_mccluskey.qm import QuineMcCluskey
 
 
