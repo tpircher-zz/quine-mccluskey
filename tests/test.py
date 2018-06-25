@@ -4,9 +4,9 @@ from __future__ import print_function
 import os
 import sys
 import time
-#from qm import QuineMcCluskey
 from quine_mccluskey.qm import QuineMcCluskey
 
+class TestFailure(Exception): pass
 
 # generate_input
 ###############################################################################
@@ -30,7 +30,7 @@ def format_set(s):
     Format a set of strings.
     """
     max_el = 50
-    if len(s) == 0:
+    if not s:
         return ""
     l = list(s)
     ret = "'" + "', '".join(l[:min(max_el, len(s))]) + "'"
@@ -39,35 +39,13 @@ def format_set(s):
     return ret
 
 
-# main function
+# run function
 ###############################################################################
-def main():
+def run(test_vector, use_xor):
     """
-    Main function
+    Run function
     """
-    qm = QuineMcCluskey(use_xor = True)
-
-    test_vector = [
-        { 'res': set(['--^^']) },
-        { 'res': set(['1--^^']) },
-        { 'res': set(['-10']), 'ons': [2], 'dnc': [4, 5, 6, 7] },
-        { 'res': set(['--1--11-', '00000001', '10001000']) },
-        { 'res': set(['----']), 'ons': [], 'dnc': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] },
-        { 'res': set(['----']), 'ons': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] },
-        { 'res': set(['----']), 'ons': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 'dnc': [10, 11, 12, 13, 14, 15] },
-        { 'res': set(['----']), 'ons': [1, 3, 5, 7, 9, 11, 13, 15], 'dnc': [0, 2, 4, 6, 8, 10, 12, 14] },
-        { 'res': set(['--^^']), 'ons': [1, 2, 5, 6, 9, 10, 13, 14] },
-        { 'res': set(['-------1']) },
-        { 'res': set(['------^^']) },
-        { 'res': set(['-----^^^']) },
-        { 'res': set(['0^^^']) },
-        { 'res': set(['0~~~']) },
-        { 'res': set(['^^^^^^^^']) },
-        { 'res': set(['^^^0', '100-']) },
-        { 'res': set(['00^-0^^0', '01000001', '10001000']) },
-        { 'res': set(['^^^00', '111^^']) },
-        { 'res': set(['---00000^^^^^^^']) },
-    ]
+    qm = QuineMcCluskey(use_xor = use_xor)
 
     for test in test_vector:
         s_out = test['res']
@@ -107,8 +85,43 @@ def main():
             print("Error: test failed")
             print("expected:    [%s]" % format_set(s_out))
             print("got:         [%s]" % format_set(s_res))
-            return 1
+            raise TestFailure
     print("\nTest OK.")
+
+# main function
+###############################################################################
+def main():
+    common_test_vector = [
+        { 'res': set(['----']), 'ons': [], 'dnc': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] },
+        { 'res': set(['----']), 'ons': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] },
+        { 'res': set(['----']), 'ons': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 'dnc': [10, 11, 12, 13, 14, 15] },
+        { 'res': set(['----']), 'ons': [1, 3, 5, 7, 9, 11, 13, 15], 'dnc': [0, 2, 4, 6, 8, 10, 12, 14] },
+    ]
+    noxor_test_vector = [
+        { 'res': set(['010-', '1-01', '111-', '0-11']), 'ons': [3,4,5,7,9,13,14,15] },
+    ]
+    xor_test_vector = [
+        { 'res': set(['--^^']) },
+        { 'res': set(['1--^^']) },
+        { 'res': set(['-10']), 'ons': [2], 'dnc': [4, 5, 6, 7] },
+        { 'res': set(['--1--11-', '00000001', '10001000']) },
+        { 'res': set(['--^^']), 'ons': [1, 2, 5, 6, 9, 10, 13, 14] },
+        { 'res': set(['^^^^']), 'ons': [1, 7, 8, 14], 'dnc': [2, 4, 5, 6, 9, 10, 11, 13] },
+        { 'res': set(['-------1']) },
+        { 'res': set(['------^^']) },
+        { 'res': set(['-----^^^']) },
+        { 'res': set(['0^^^']) },
+        { 'res': set(['0~~~']) },
+        { 'res': set(['^^^^^^^^']) },
+        { 'res': set(['^^^0', '100-']) },
+        { 'res': set(['00^-0^^0', '01000001', '10001000']) },
+        { 'res': set(['^^^00', '111^^']) },
+        { 'res': set(['---00000^^^^^^^']) },
+    ]
+    try:
+        res = run(common_test_vector + noxor_test_vector, use_xor=False)
+        res = run(common_test_vector + xor_test_vector, use_xor=True)
+    except TestFailure: return 1
     return 0
 
 if __name__ == "__main__":
