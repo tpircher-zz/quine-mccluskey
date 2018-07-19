@@ -124,8 +124,8 @@ class QuineMcCluskey:
             self.n_bits = int(math.ceil(math.log(max(terms) + 1, 2)))
 
         # Generate the sets of ones and dontcares
-        ones = set(self.__num2str(i) for i in ones)
-        dc = set(self.__num2str(i) for i in dc)
+        ones = [self.__num2str(i) for i in ones]
+        dc = [self.__num2str(i) for i in dc]
 
         return self.simplify_los(ones, dc)
 
@@ -139,7 +139,7 @@ class QuineMcCluskey:
             function is '1', e.g. ['0001', '0010', '0110', '1000', '1111'].
 
         Kwargs:
-            dc: (list of str)set of strings that define the don't care
+            dc: (list of str): list of strings that define the don't care
             combinations.
 
         Returns:
@@ -174,7 +174,7 @@ class QuineMcCluskey:
         self.profile_xor = 0    # number of comparisons (for profiling)
         self.profile_xnor = 0   # number of comparisons (for profiling)
 
-        terms = ones | dc
+        terms = set(ones) | set(dc)
         if len(terms) == 0:
             return None
 
