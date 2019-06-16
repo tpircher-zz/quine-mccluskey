@@ -11,5 +11,5 @@ git archive --format=tar --prefix="$archive/" HEAD | tar x
 rm -f "$archive/$0"
 
 tar cvzf "$archive.tar.gz" "$archive"
-zip "$archive.zip" `find "$archive"`
+zip "$archive.zip" "$archive"
 rm -rf "$archive"

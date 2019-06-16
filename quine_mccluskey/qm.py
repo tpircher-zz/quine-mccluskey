@@ -2,7 +2,7 @@
 
 #  qm.py -- A Quine McCluskey Python implementation
 #
-#  Copyright (c) 2006-2016  Thomas Pircher  <tehpeh@gmx.net>
+#  Copyright (c) 2006-2016  Thomas Pircher  <tehpeh-web@tty1.net>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy
 #  of this software and associated documentation files (the "Software"), to
@@ -53,7 +53,7 @@ class QuineMcCluskey:
     If the class was instantiiated with the use_xor set to True, then the
     resulting boolean function may contain XOR and XNOR operators.
     """
-    __version__ = "0.2"
+    __version__ = "0.3"
 
 
 
