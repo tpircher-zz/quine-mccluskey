@@ -264,7 +264,7 @@ class QuineMcCluskey:
 
 
 
-    def __get_prime_implicants(self, terms: Set[str]) -> Set[str]:
+    def __get_prime_implicants(self, terms):
         """Simplify the set 'terms'.
 
         Args:
@@ -272,7 +272,7 @@ class QuineMcCluskey:
             ones and dontcares.
 
         Returns:
-            A set of prime implicants. These are the minterms that cannot be
+            A list of prime implicants. These are the minterms that cannot be
             reduced with step 1 of the Quine McCluskey method.
 
         This is the very first step in the Quine McCluskey algorithm. This
@@ -288,35 +288,34 @@ class QuineMcCluskey:
         # Each element of groups is a set of terms with the same number
         # of ones.  In other words, each term contained in the set
         # groups[i] contains exactly i ones.
-        groups_top_level: List[Set[str]] = [set() for i in range(n_groups)]
+        groups = [set() for i in range(n_groups)]
         for t in terms:
             n_bits = t.count('1')
-            groups_top_level[n_bits].add(t)
+            groups[n_bits].add(t)
         if self.use_xor:
             # Add 'simple' XOR and XNOR terms to the set of terms.
             # Simple means the terms can be obtained by combining just two
             # bits.
-            for gi, group in enumerate(groups_top_level):
+            for gi, group in enumerate(groups):
                 for t1 in group:
                     for t2 in group:
                         t12 = self.__reduce_simple_xor_terms(t1, t2)
-                        if t12 is not None:
+                        if t12 != None:
                             terms.add(t12)
                     if gi < n_groups - 2:
-                        for t2 in groups_top_level[gi + 2]:
+                        for t2 in groups[gi + 2]:
                             t12 = self.__reduce_simple_xnor_terms(t1, t2)
-                            if t12 is not None:
+                            if t12 != None:
                                 terms.add(t12)
 
-        done: bool = False
-        groups: dict[tuple[int, int, int], Set[str]] = {}
+        done = False
         while not done:
             # Group terms into groups.
             # groups is a list of length n_groups.
             # Each element of groups is a set of terms with the same
             # number of ones.  In other words, each term contained in the
             # set groups[i] contains exactly i ones.
-            groups = {}
+            groups = dict()
             for t in terms:
                 n_ones = t.count('1')
                 n_xor  = t.count('^')
@@ -330,14 +329,14 @@ class QuineMcCluskey:
                     groups[key] = set()
                 groups[key].add(t)
 
-            terms_inner: Set[str] = set()           # The set of new created terms
-            used: Set[str] = set()            # The set of used terms
+            terms = set()           # The set of new created terms
+            used = set()            # The set of used terms
 
             # Find prime implicants
-            for key in groups:  # pylint: disable=consider-using-dict-items
-                key_next: tuple[int, int, int] = (key[0]+1, key[1], key[2])
+            for key in groups:
+                key_next = (key[0]+1, key[1], key[2])
                 if key_next in groups:
-                    group_next: Set[str] = groups[key_next]
+                    group_next = groups[key_next]
                     for t1 in groups[key]:
                         # Optimisation:
                         # The Quine-McCluskey algorithm compares t1 with
@@ -354,7 +353,7 @@ class QuineMcCluskey:
                                     t12 = t1[:i] + '-' + t1[i+1:]
                                     used.add(t1)
                                     used.add(t2)
-                                    terms_inner.add(t12)
+                                    terms.add(t12)
 
             # Find XOR combinations
             for key in [k for k in groups if k[1] > 0]:
@@ -369,7 +368,7 @@ class QuineMcCluskey:
                                 if t2 in groups[key_complement]:
                                     t12 = t1[:i] + '^' + t1[i+1:]
                                     used.add(t1)
-                                    terms_inner.add(t12)
+                                    terms.add(t12)
             # Find XNOR combinations
             for key in [k for k in groups if k[2] > 0]:
                 key_complement = (key[0] + 1, key[2], key[1])
@@ -383,7 +382,7 @@ class QuineMcCluskey:
                                 if t2 in groups[key_complement]:
                                     t12 = t1[:i] + '~' + t1[i+1:]
                                     used.add(t1)
-                                    terms_inner.add(t12)
+                                    terms.add(t12)
 
             # Add the unused terms to the list of marked terms
             for g in list(groups.values()):
@@ -435,7 +434,7 @@ class QuineMcCluskey:
                 groups[n] = set()
             groups[n].add(t1)
         for t2 in sorted(list(groups.keys()), reverse=True):
-            for g in groups[t2]:
+            for g in sorted(groups[t2], reverse=True):
                 if not perms[g] <= ei_range:
                     ei.add(g)
                     ei_range |= perms[g]
