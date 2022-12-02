@@ -429,7 +429,7 @@ class QuineMcCluskey:
                 groups[n] = set()
             groups[n].add(t)
         for t in sorted(list(groups.keys()), reverse=True):
-            for g in groups[t]:
+            for g in sorted(groups[t], reverse=True):
                 if not perms[g] <= ei_range:
                     ei.add(g)
                     ei_range |= perms[g]
