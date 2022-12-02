@@ -264,7 +264,7 @@ class QuineMcCluskey:
 
 
 
-    def __get_prime_implicants(self, terms):
+    def __get_prime_implicants(self, terms: Set[str]) -> Set[str]:
         """Simplify the set 'terms'.
 
         Args:
@@ -272,7 +272,7 @@ class QuineMcCluskey:
             ones and dontcares.
 
         Returns:
-            A list of prime implicants. These are the minterms that cannot be
+            A set of prime implicants. These are the minterms that cannot be
             reduced with step 1 of the Quine McCluskey method.
 
         This is the very first step in the Quine McCluskey algorithm. This
@@ -288,34 +288,35 @@ class QuineMcCluskey:
         # Each element of groups is a set of terms with the same number
         # of ones.  In other words, each term contained in the set
         # groups[i] contains exactly i ones.
-        groups = [set() for i in range(n_groups)]
+        groups_1: List[Set[str]] = [set() for i in range(n_groups)]
         for t in terms:
             n_bits = t.count('1')
-            groups[n_bits].add(t)
+            groups_1[n_bits].add(t)
         if self.use_xor:
             # Add 'simple' XOR and XNOR terms to the set of terms.
             # Simple means the terms can be obtained by combining just two
             # bits.
-            for gi, group in enumerate(groups):
+            for gi, group in enumerate(groups_1):
                 for t1 in group:
                     for t2 in group:
                         t12 = self.__reduce_simple_xor_terms(t1, t2)
-                        if t12 != None:
+                        if t12 is not None:
                             terms.add(t12)
                     if gi < n_groups - 2:
-                        for t2 in groups[gi + 2]:
+                        for t2 in groups_1[gi + 2]:
                             t12 = self.__reduce_simple_xnor_terms(t1, t2)
-                            if t12 != None:
+                            if t12 is not None:
                                 terms.add(t12)
 
         done = False
+        groups: dict[tuple[int, int, int], Set[str]] = {}
         while not done:
             # Group terms into groups.
             # groups is a list of length n_groups.
             # Each element of groups is a set of terms with the same
             # number of ones.  In other words, each term contained in the
             # set groups[i] contains exactly i ones.
-            groups = dict()
+            groups = {}
             for t in terms:
                 n_ones = t.count('1')
                 n_xor  = t.count('^')
