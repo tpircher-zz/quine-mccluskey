@@ -1,0 +1,10 @@
+[tool.pylint]
+max-line-length = 127
+disable = [
+    "invalid-name", 
+    "too-many-nested-blocks", 
+    "too-many-locals", 
+    "dangerous-default-value",
+    "too-many-branches", 
+    "too-many-statements"
+]
