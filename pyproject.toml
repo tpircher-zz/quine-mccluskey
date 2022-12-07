@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "quine_mccluskey_tomas789"
 description = "An implementation of the Quine-McCluskey algorithm"
+long_description_content_type
 requires-python = ">=3.7"
 keywords = ["Quine McCluskey", "XOR"]
 license = {text = "BSD"}
@@ -28,8 +29,7 @@ classifiers = [
 dynamic = ["readme", "version"]
 
 [project.urls]
-"Homepage" = "https://github.com/pypa/sampleproject"
-"Bug Tracker" = "https://github.com/pypa/sampleproject/issues"
+"Homepage" = "https://github.com/tomas789/quine-mccluskey-tomas789"
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.md"]}
