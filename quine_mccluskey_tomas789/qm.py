@@ -534,7 +534,7 @@ def reduce_implicants(n_bits: int, implicants: Set[str], dc: Set[str]) -> Set[st
             if this_coverage.issubset(others_coverage):
                 redundant.append(this_implicant)
         if redundant:
-            worst = sorted(redundant, key=complexity, reverse=True)[0]
+            worst = max(redundant, key=complexity)
             del coverage[worst]
         else:
             break
@@ -593,8 +593,8 @@ def simplify_with_profile(
         n_bits = int(math.ceil(math.log(max(terms) + 1, 2)))
 
     # Generate the sets of ones and dontcares
-    ones_processed = [num2str(n_bits, i) for i in ones]
-    dc_processed = [num2str(n_bits, i) for i in dc]
+    ones_processed: List[str] = [num2str(n_bits, i) for i in ones]
+    dc_processed: List[str] = [num2str(n_bits, i) for i in dc]
 
     return simplify_los_with_profile(ones_processed, dc_processed, num_bits=num_bits, use_xor=use_xor)
 

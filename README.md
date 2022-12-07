@@ -71,4 +71,19 @@ python3 -m pip install dist/quine_mccluskey_tomas789-1.0-py2.py3-none-any.whl
 
 ## Running tests
 
+### Unit tests
+
+The library comes with a basic set of unit tests. They can be executed using `pytest`
+
+```bash
+pytest
+```
+
+### Fuzz testing
+
+We also have a fuzz testing. It generates random formulas, simplifies them and checks that the result is correct. 
+
+```bash
+python3 fuzz.py
+```
 
