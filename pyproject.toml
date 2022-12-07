@@ -5,10 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "quine_mccluskey_tomas789"
 description = "An implementation of the Quine-McCluskey algorithm"
-long_description_content_type
 requires-python = ">=3.7"
 keywords = ["Quine McCluskey", "XOR"]
 license = {text = "BSD"}
+readme = "README.md"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Topic :: Utilities",
@@ -26,13 +26,13 @@ classifiers = [
     "Topic :: System :: Hardware",
     "Typing :: Typed",
 ]
-dynamic = ["readme", "version"]
+dynamic = ["version"]
 
 [project.urls]
 "Homepage" = "https://github.com/tomas789/quine-mccluskey-tomas789"
 
 [tool.setuptools.dynamic]
-readme = {file = ["README.md"]}
+version = {attr = "quine_mccluskey_tomas789._version.__version__"}
 
 [tool.setuptools_scm]
 write_to = "quine_mccluskey_tomas789/_version.py"
