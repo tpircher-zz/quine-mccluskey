@@ -39,6 +39,7 @@ write_to = "quine_mccluskey_tomas789/_version.py"
 
 [tool.pylint]
 max-line-length = 127
+ignore = "_version.py"
 disable = [
     "invalid-name", 
     "too-many-nested-blocks", 

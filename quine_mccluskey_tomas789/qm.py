@@ -334,7 +334,7 @@ class QuineMcCluskey:
             used = set()            # The set of used terms
 
             # Find prime implicants
-            for key in groups:
+            for key in groups:  # pylint: disable=consider-using-dict-items
                 key_next = (key[0]+1, key[1], key[2])
                 if key_next in groups:
                     group_next = groups[key_next]
