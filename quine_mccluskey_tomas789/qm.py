@@ -21,8 +21,10 @@ import re
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import sys
+
 sys.path.append("/Users/tomaskrejci/Developer/quine-mccluskey/build")
 import _qmc
+
 
 class ResultWithProfile:
     """A wrapper around minimization results with profiling stats."""
@@ -44,32 +46,7 @@ def reduce_simple_xor_terms(t1: str, t2: str) -> Optional[str]:
 
 
 def reduce_simple_xnor_terms(t1: str, t2: str) -> Optional[str]:
-    """Try to reduce two terms t1 and t2, by combining them as XNOR terms.
-
-    Args:
-        t1 (str): a term.
-        t2 (str): a term.
-
-    Returns:
-        The reduced term or None if the terms cannot be reduced.
-    """
-    difft10 = 0
-    difft20 = 0
-    ret = []
-    for (t1c, t2c) in zip(t1, t2):
-        if t1c == "^" or t2c == "^" or t1c == "~" or t2c == "~":
-            return None
-        if t1c != t2c:
-            ret.append("~")
-            if t1c == "0":
-                difft10 += 1
-            else:
-                difft20 += 1
-        else:
-            ret.append(t1c)
-    if (difft10 == 2 and difft20 == 0) or (difft10 == 0 and difft20 == 2):
-        return "".join(ret)
-    return None
+    return _qmc.reduce_simple_xnor_terms(t1, t2)
 
 
 def get_prime_implicants(n_bits: int, use_xor: bool, terms: Set[str]) -> ResultWithProfile:
@@ -255,148 +232,11 @@ def get_essential_implicants(n_bits: int, terms: Set[str], dc: Set[str]) -> Set[
 
 
 def get_term_rank(term: str, term_range: int) -> int:
-    """Calculate the "rank" of a term.
-
-    Args:
-        term (str): one single term in string format.
-
-        term_range (int): the rank of the class of term.
-
-    Returns:
-        The "rank" of the term.
-
-    The rank of a term is a positive number or zero.  If a term has all
-    bits fixed '0's then its "rank" is 0. The more 'dontcares' and xor or
-    xnor it contains, the higher its rank.
-
-    A dontcare weights more than a xor, a xor weights more than a xnor, a
-    xnor weights more than 1 and a 1 weights more than a 0.
-
-    This means, the higher rank of a term, the more desireable it is to
-    include this term in the final result.
-    """
-    n = 0
-    for t in term:
-        if t == "-":
-            n += 8
-        elif t == "^":
-            n += 4
-        elif t == "~":
-            n += 2
-        elif t == "1":
-            n += 1
-    return 4 * term_range + n
+    return _qmc.get_term_rank(term, term_range)
 
 
 def permutations(value: str = "", exclude: Set[str] = set()) -> Set[str]:
-    """Iterator to generate all possible values out of a string.
-
-    Args:
-        value (str): A string containing any of the above characters.
-        exclude (set): A set of values to skip (usually don't cares)
-
-    Returns:
-        The output strings contain only '0' and '1'.
-
-    Example:
-        from qm import QuineMcCluskey
-        qm = QuineMcCluskey()
-        for i in qm.permutations('1--^^'):
-            print(i)
-
-    The operation performed by this generator function can be seen as the
-    inverse of binary minimisation methonds such as Karnaugh maps, Quine
-    McCluskey or Espresso.  It takes as input a minterm and generates all
-    possible maxterms from it.  Inputs and outputs are strings.
-
-    Possible input characters:
-        '0': the bit at this position will always be zero.
-        '1': the bit at this position will always be one.
-        '-': don't care: this bit can be zero or one.
-        '^': all bits with the caret are XOR-ed together.
-        '~': all bits with the tilde are XNOR-ed together.
-
-    Algorithm description:
-        This lovely piece of spaghetti code generates all possibe
-        permutations of a given string describing logic operations.
-        This could be achieved by recursively running through all
-        possibilities, but a more linear approach has been preferred.
-        The basic idea of this algorithm is to consider all bit
-        positions from 0 upwards (direction = +1) until the last bit
-        position. When the last bit position has been reached, then the
-        generated string is yielded.  At this point the algorithm works
-        its way backward (direction = -1) until it finds an operator
-        like '-', '^' or '~'.  The bit at this position is then flipped
-        (generally from '0' to '1') and the direction flag again
-        inverted. This way the bit position pointer (i) runs forth and
-        back several times until all possible permutations have been
-        generated.
-        When the position pointer reaches position -1, all possible
-        combinations have been visited.
-    """
-    exclude_int: Set[int] = {int(e) for e in exclude}
-    n_bits = len(value)
-    n_xor = value.count("^") + value.count("~")
-    xor_value = 0
-    seen_xors = 0
-    res = ["0" for i in range(n_bits)]
-    i = 0
-    direction = +1
-    result: Set[str] = set()
-    while i >= 0:
-        # binary constant
-        if value[i] == "0" or value[i] == "1":
-            res[i] = value[i]
-        # dontcare operator
-        elif value[i] == "-":
-            if direction == +1:
-                res[i] = "0"
-            elif res[i] == "0":
-                res[i] = "1"
-                direction = +1
-        # XOR operator
-        elif value[i] == "^":
-            seen_xors = seen_xors + direction
-            if direction == +1:
-                if seen_xors == n_xor and xor_value == 0:
-                    res[i] = "1"
-                else:
-                    res[i] = "0"
-            else:
-                if res[i] == "0" and seen_xors < n_xor - 1:
-                    res[i] = "1"
-                    direction = +1
-                    seen_xors = seen_xors + 1
-            if res[i] == "1":
-                xor_value = xor_value ^ 1
-        # XNOR operator
-        elif value[i] == "~":
-            seen_xors = seen_xors + direction
-            if direction == +1:
-                if seen_xors == n_xor and xor_value == 1:
-                    res[i] = "1"
-                else:
-                    res[i] = "0"
-            else:
-                if res[i] == "0" and seen_xors < n_xor - 1:
-                    res[i] = "1"
-                    direction = +1
-                    seen_xors = seen_xors + 1
-            if res[i] == "1":
-                xor_value = xor_value ^ 1
-        # unknown input
-        else:
-            res[i] = "#"
-
-        i = i + direction
-        if i == n_bits:
-            direction = -1
-            i = n_bits - 1
-            bitstring = "".join(res)
-            if int(bitstring, base=2) not in exclude_int:
-                result.add(bitstring)
-
-    return result
+    return _qmc.permutations(value, exclude)
 
 
 def get_terms(implicant: str) -> Tuple[List[int], List[int], List[int], List[int], List[int]]:
