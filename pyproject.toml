@@ -8,7 +8,6 @@ description = "An implementation of the Quine-McCluskey algorithm"
 requires-python = ">=3.7"
 keywords = ["Quine McCluskey", "XOR"]
 license = {text = "BSD"}
-version = "1.0"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Topic :: Utilities",
@@ -26,7 +25,7 @@ classifiers = [
     "Topic :: System :: Hardware",
     "Typing :: Typed",
 ]
-dynamic = ["readme"]
+dynamic = ["readme", "version"]
 
 [project.urls]
 "Homepage" = "https://github.com/pypa/sampleproject"
@@ -34,6 +33,9 @@ dynamic = ["readme"]
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.md"]}
+
+[tool.setuptools_scm]
+write_to = "quine_mccluskey_tomas789/_version.py"
 
 [tool.pylint]
 max-line-length = 127
