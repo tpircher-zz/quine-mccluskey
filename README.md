@@ -16,18 +16,52 @@ terms. This slows down the algorithm, but in some cases the result can be much
 more compact than a sum of product.
 
 
-How to install qm.py
---------------------
+## Installation
 
-Install the package with
+The recommanded way of installing this package is by using pip
 
- python setup.py install
+```bash
+python3 -m pip install quine-mccluskey-tomas789
+```
 
-This needs superuser privileges. If you want to install the package locally,
-you can run:
+Note that on Windows you might need to use the `py` command instead.
 
- mypath=XXX
- PYTHONPATH=$mypath/lib/python2.7/site-packages/ python setup.py install --prefix $mypath
+```bash
+py -m pip install quine-mccluskey-tomas789
+```
 
-where XXX can be any path. You may have to change the PYTHONPATH according to your
-python version.
+There are some othere means of installing the package which are recommanded only in specific cases.
+
+### Development build
+
+```bash
+python3 -m pip install -e .
+```
+
+### Build wheel files locally
+
+Make sure you have the latest version of PyPA's build installed:
+
+```bash
+python3 -m pip install --upgrade build
+```
+
+Now run this command from the same directory where pyproject.toml is located:
+
+```bash
+python3 -m build
+```
+
+This command should output a lot of text and once completed should generate two files in the dist directory:
+
+```text
+dist/
+├── quine_mccluskey_tomas789-1.0-py2.py3-none-any.whl
+└── quine_mccluskey_tomas789-1.0.tar.gz
+```
+
+Wheel file can then be distributed via your own means and installed using pip
+
+```bash
+python3 -m pip install dist/quine_mccluskey_tomas789-1.0-py2.py3-none-any.whl
+```
