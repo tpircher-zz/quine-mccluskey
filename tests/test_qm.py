@@ -120,3 +120,18 @@ def test_noxor_without_xor(input):
 @pytest.mark.parametrize("input", xor_test_vector)
 def test_xor_with_xor(input):
     run(input, use_xor=True)
+
+
+def test_false():
+    result = qm.simplify_los(ones=[], dc=[], num_bits=2, use_xor=False)
+    assert result is None
+
+
+def test_true():
+    result = qm.simplify_los(ones=["00", "11", "01", "10"], dc=[], num_bits=2, use_xor=False)
+    assert result == {"--"}
+
+
+def test_false_with_dontcare():
+    result = qm.simplify_los(ones=[], dc=["11"], num_bits=2, use_xor=False)
+    assert result == {"--"}

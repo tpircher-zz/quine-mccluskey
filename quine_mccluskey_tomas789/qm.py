@@ -20,6 +20,9 @@ import math
 import re
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+import sys
+sys.path.append("/Users/tomaskrejci/Developer/quine-mccluskey/build")
+import _qmc
 
 class ResultWithProfile:
     """A wrapper around minimization results with profiling stats."""
@@ -34,20 +37,6 @@ class ResultWithProfile:
 
 
 ResultWithProfile.none = ResultWithProfile(result=None, profile_cmp=0, profile_xor=0, profile_xnor=0)
-
-
-def num2str(n_bits: int, i: int) -> str:
-    """
-    Convert an integer to its bit-representation in a string.
-
-    Args:
-        i (int): the number to convert.
-
-    Returns:
-        The binary string representation of the parameter i.
-    """
-    x = ["1" if i & (1 << k) else "0" for k in range(n_bits - 1, -1, -1)]
-    return "".join(x)
 
 
 def reduce_simple_xor_terms(t1: str, t2: str) -> Optional[str]:
@@ -593,8 +582,8 @@ def simplify_with_profile(
         n_bits = int(math.ceil(math.log(max(terms) + 1, 2)))
 
     # Generate the sets of ones and dontcares
-    ones_processed: List[str] = [num2str(n_bits, i) for i in ones]
-    dc_processed: List[str] = [num2str(n_bits, i) for i in dc]
+    ones_processed: List[str] = [_qmc.num2str(n_bits, i) for i in ones]
+    dc_processed: List[str] = [_qmc.num2str(n_bits, i) for i in dc]
 
     return simplify_los_with_profile(ones_processed, dc_processed, num_bits=num_bits, use_xor=use_xor)
 
