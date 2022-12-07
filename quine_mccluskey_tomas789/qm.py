@@ -55,9 +55,8 @@ class QuineMcCluskey:
     If the class was instantiiated with the use_xor set to True, then the
     resulting boolean function may contain XOR and XNOR operators.
     """
+
     __version__ = "1.0"
-
-
 
     def __init__(self, use_xor: bool = False) -> None:
         """The class constructor.
@@ -67,12 +66,12 @@ class QuineMcCluskey:
             a more compact return.
         """
         self.use_xor: bool = use_xor  # Whether or not to use XOR and XNOR operations.
-        self.n_bits: int = 0         # number of bits (i.e. self.n_bits == len(ones[i]) for every i).
-        self.profile_cmp: int = 0    # number of comparisons (for profiling)
-        self.profile_xor: int = 0    # number of comparisons (for profiling)
-        self.profile_xnor: int = 0   # number of comparisons (for profiling)
-
-
+        self.n_bits: int = (
+            0  # number of bits (i.e. self.n_bits == len(ones[i]) for every i).
+        )
+        self.profile_cmp: int = 0  # number of comparisons (for profiling)
+        self.profile_xor: int = 0  # number of comparisons (for profiling)
+        self.profile_xnor: int = 0  # number of comparisons (for profiling)
 
     def __num2str(self, i: int) -> str:
         """
@@ -84,12 +83,12 @@ class QuineMcCluskey:
         Returns:
             The binary string representation of the parameter i.
         """
-        x = ['1' if i & (1 << k) else '0' for k in range(self.n_bits - 1, -1, -1)]
+        x = ["1" if i & (1 << k) else "0" for k in range(self.n_bits - 1, -1, -1)]
         return "".join(x)
 
-
-
-    def simplify(self, ones: List[int], dc: List[int] = [], num_bits: Optional[int] = None) -> Optional[Set[str]]:
+    def simplify(
+        self, ones: List[int], dc: List[int] = [], num_bits: Optional[int] = None
+    ) -> Optional[Set[str]]:
         """Simplify a list of terms.
 
         Args:
@@ -134,9 +133,9 @@ class QuineMcCluskey:
 
         return self.simplify_los(ones_processed, dc_processed)
 
-
-
-    def simplify_los(self, ones: List[str], dc: List[str] = [], num_bits: Optional[int] = None) -> Optional[Set[str]]:
+    def simplify_los(
+        self, ones: List[str], dc: List[str] = [], num_bits: Optional[int] = None
+    ) -> Optional[Set[str]]:
         """The simplification algorithm for a list of string-encoded inputs.
 
         Args:
@@ -195,14 +194,14 @@ class QuineMcCluskey:
         prime_implicants = self.__get_prime_implicants(terms)
 
         # Remove essential terms.
-        essential_implicants = self.__get_essential_implicants(prime_implicants, set(dc))
+        essential_implicants = self.__get_essential_implicants(
+            prime_implicants, set(dc)
+        )
 
         # Perform further reduction on essential implicants
         reduced_implicants = self.__reduce_implicants(essential_implicants, set(dc))
 
         return reduced_implicants
-
-
 
     def __reduce_simple_xor_terms(self, t1: str, t2: str) -> Optional[str]:
         """Try to reduce two terms t1 and t2, by combining them as XOR terms.
@@ -218,11 +217,11 @@ class QuineMcCluskey:
         difft20 = 0
         ret = []
         for (t1c, t2c) in zip(t1, t2):
-            if t1c == '^' or t2c == '^' or t1c == '~' or t2c == '~':
+            if t1c == "^" or t2c == "^" or t1c == "~" or t2c == "~":
                 return None
             if t1c != t2c:
-                ret.append('^')
-                if t2c == '0':
+                ret.append("^")
+                if t2c == "0":
                     difft10 += 1
                 else:
                     difft20 += 1
@@ -231,8 +230,6 @@ class QuineMcCluskey:
         if difft10 == 1 and difft20 == 1:
             return "".join(ret)
         return None
-
-
 
     def __reduce_simple_xnor_terms(self, t1: str, t2: str) -> Optional[str]:
         """Try to reduce two terms t1 and t2, by combining them as XNOR terms.
@@ -248,11 +245,11 @@ class QuineMcCluskey:
         difft20 = 0
         ret = []
         for (t1c, t2c) in zip(t1, t2):
-            if t1c == '^' or t2c == '^' or t1c == '~' or t2c == '~':
+            if t1c == "^" or t2c == "^" or t1c == "~" or t2c == "~":
                 return None
             if t1c != t2c:
-                ret.append('~')
-                if t1c == '0':
+                ret.append("~")
+                if t1c == "0":
                     difft10 += 1
                 else:
                     difft20 += 1
@@ -261,8 +258,6 @@ class QuineMcCluskey:
         if (difft10 == 2 and difft20 == 0) or (difft10 == 0 and difft20 == 2):
             return "".join(ret)
         return None
-
-
 
     def __get_prime_implicants(self, terms: Set[str]) -> Set[str]:
         """Simplify the set 'terms'.
@@ -290,7 +285,7 @@ class QuineMcCluskey:
         # groups[i] contains exactly i ones.
         groups_1: List[Set[str]] = [set() for i in range(n_groups)]
         for t in terms:
-            n_bits = t.count('1')
+            n_bits = t.count("1")
             groups_1[n_bits].add(t)
         if self.use_xor:
             # Add 'simple' XOR and XNOR terms to the set of terms.
@@ -318,9 +313,9 @@ class QuineMcCluskey:
             # set groups[i] contains exactly i ones.
             groups = {}
             for t in terms:
-                n_ones = t.count('1')
-                n_xor  = t.count('^')
-                n_xnor = t.count('~')
+                n_ones = t.count("1")
+                n_xor = t.count("^")
+                n_xnor = t.count("~")
                 # The algorithm can not cope with mixed XORs and XNORs in
                 # one expression.
                 assert n_xor == 0 or n_xnor == 0
@@ -330,12 +325,12 @@ class QuineMcCluskey:
                     groups[key] = set()
                 groups[key].add(t)
 
-            terms = set()           # The set of new created terms
-            used = set()            # The set of used terms
+            terms = set()  # The set of new created terms
+            used = set()  # The set of used terms
 
             # Find prime implicants
             for key in groups:  # pylint: disable=consider-using-dict-items
-                key_next = (key[0]+1, key[1], key[2])
+                key_next = (key[0] + 1, key[1], key[2])
                 if key_next in groups:
                     group_next = groups[key_next]
                     for t1 in groups[key]:
@@ -347,11 +342,11 @@ class QuineMcCluskey:
                         # opportune positions and check if this new term is
                         # contained in the set groups[key_next].
                         for i, c1 in enumerate(t1):
-                            if c1 == '0':
+                            if c1 == "0":
                                 self.profile_cmp += 1
-                                t2 = t1[:i] + '1' + t1[i+1:]
+                                t2 = t1[:i] + "1" + t1[i + 1 :]
                                 if t2 in group_next:
-                                    t12 = t1[:i] + '-' + t1[i+1:]
+                                    t12 = t1[:i] + "-" + t1[i + 1 :]
                                     used.add(t1)
                                     used.add(t2)
                                     terms.add(t12)
@@ -361,13 +356,13 @@ class QuineMcCluskey:
                 key_complement = (key[0] + 1, key[2], key[1])
                 if key_complement in groups:
                     for t1 in groups[key]:
-                        t1_complement = t1.replace('^', '~')
+                        t1_complement = t1.replace("^", "~")
                         for i, c1 in enumerate(t1):
-                            if c1 == '0':
+                            if c1 == "0":
                                 self.profile_xor += 1
-                                t2 = t1_complement[:i] + '1' + t1_complement[i+1:]
+                                t2 = t1_complement[:i] + "1" + t1_complement[i + 1 :]
                                 if t2 in groups[key_complement]:
-                                    t12 = t1[:i] + '^' + t1[i+1:]
+                                    t12 = t1[:i] + "^" + t1[i + 1 :]
                                     used.add(t1)
                                     terms.add(t12)
             # Find XNOR combinations
@@ -375,13 +370,13 @@ class QuineMcCluskey:
                 key_complement = (key[0] + 1, key[2], key[1])
                 if key_complement in groups:
                     for t1 in groups[key]:
-                        t1_complement = t1.replace('~', '^')
+                        t1_complement = t1.replace("~", "^")
                         for i, c1 in enumerate(t1):
-                            if c1 == '0':
+                            if c1 == "0":
                                 self.profile_xnor += 1
-                                t2 = t1_complement[:i] + '1' + t1_complement[i+1:]
+                                t2 = t1_complement[:i] + "1" + t1_complement[i + 1 :]
                                 if t2 in groups[key_complement]:
-                                    t12 = t1[:i] + '~' + t1[i+1:]
+                                    t12 = t1[:i] + "~" + t1[i + 1 :]
                                     used.add(t1)
                                     terms.add(t12)
 
@@ -397,8 +392,6 @@ class QuineMcCluskey:
         for g in list(groups.values()):
             pi |= g
         return pi
-
-
 
     def __get_essential_implicants(self, terms: Set[str], dc: Set[str]) -> Set[str]:
         """Simplify the set 'terms'.
@@ -440,10 +433,8 @@ class QuineMcCluskey:
                     ei.add(g)
                     ei_range |= perms[g]
         if len(ei) == 0:
-            ei = set(['-' * self.n_bits])
+            ei = set(["-" * self.n_bits])
         return ei
-
-
 
     def __get_term_rank(self, term: str, term_range: int) -> int:
         """Calculate the "rank" of a term.
@@ -476,11 +467,9 @@ class QuineMcCluskey:
                 n += 2
             elif t == "1":
                 n += 1
-        return 4*term_range + n
+        return 4 * term_range + n
 
-
-
-    def permutations(self, value: str = '', exclude: Set[str] = set()) -> Set[str]:
+    def permutations(self, value: str = "", exclude: Set[str] = set()) -> Set[str]:
         """Iterator to generate all possible values out of a string.
 
         Args:
@@ -528,57 +517,57 @@ class QuineMcCluskey:
         """
         exclude_int: Set[int] = {int(e) for e in exclude}
         n_bits = len(value)
-        n_xor = value.count('^') + value.count('~')
+        n_xor = value.count("^") + value.count("~")
         xor_value = 0
         seen_xors = 0
-        res = ['0' for i in range(n_bits)]
+        res = ["0" for i in range(n_bits)]
         i = 0
         direction = +1
         result: Set[str] = set()
         while i >= 0:
             # binary constant
-            if value[i] == '0' or value[i] == '1':
+            if value[i] == "0" or value[i] == "1":
                 res[i] = value[i]
             # dontcare operator
-            elif value[i] == '-':
+            elif value[i] == "-":
                 if direction == +1:
-                    res[i] = '0'
-                elif res[i] == '0':
-                    res[i] = '1'
+                    res[i] = "0"
+                elif res[i] == "0":
+                    res[i] = "1"
                     direction = +1
             # XOR operator
-            elif value[i] == '^':
+            elif value[i] == "^":
                 seen_xors = seen_xors + direction
                 if direction == +1:
                     if seen_xors == n_xor and xor_value == 0:
-                        res[i] = '1'
+                        res[i] = "1"
                     else:
-                        res[i] = '0'
+                        res[i] = "0"
                 else:
-                    if res[i] == '0' and seen_xors < n_xor - 1:
-                        res[i] = '1'
+                    if res[i] == "0" and seen_xors < n_xor - 1:
+                        res[i] = "1"
                         direction = +1
                         seen_xors = seen_xors + 1
-                if res[i] == '1':
+                if res[i] == "1":
                     xor_value = xor_value ^ 1
             # XNOR operator
-            elif value[i] == '~':
+            elif value[i] == "~":
                 seen_xors = seen_xors + direction
                 if direction == +1:
                     if seen_xors == n_xor and xor_value == 1:
-                        res[i] = '1'
+                        res[i] = "1"
                     else:
-                        res[i] = '0'
+                        res[i] = "0"
                 else:
-                    if res[i] == '0' and seen_xors < n_xor - 1:
-                        res[i] = '1'
+                    if res[i] == "0" and seen_xors < n_xor - 1:
+                        res[i] = "1"
                         direction = +1
                         seen_xors = seen_xors + 1
-                if res[i] == '1':
+                if res[i] == "1":
                     xor_value = xor_value ^ 1
             # unknown input
             else:
-                res[i] = '#'
+                res[i] = "#"
 
             i = i + direction
             if i == n_bits:
@@ -590,19 +579,19 @@ class QuineMcCluskey:
 
         return result
 
-
-
     def __reduce_implicants(self, implicants: Set[str], dc: Set[str]) -> Set[str]:
-        def get_terms(implicant: str) -> Tuple[List[int], List[int], List[int], List[int], List[int]]:
+        def get_terms(
+            implicant: str,
+        ) -> Tuple[List[int], List[int], List[int], List[int], List[int]]:
             """Return the indexes for each type of token in given implicant string"""
-            term_ones = [m.start() for m in re.finditer(re.escape('1'), implicant)]
-            term_zeros = [m.start() for m in re.finditer(re.escape('0'), implicant)]
-            term_xors = [m.start() for m in re.finditer(re.escape('^'), implicant)]
-            term_xnors = [m.start() for m in re.finditer(re.escape('~'), implicant)]
-            term_dcs = [m.start() for m in re.finditer(re.escape('-'), implicant)]
+            term_ones = [m.start() for m in re.finditer(re.escape("1"), implicant)]
+            term_zeros = [m.start() for m in re.finditer(re.escape("0"), implicant)]
+            term_xors = [m.start() for m in re.finditer(re.escape("^"), implicant)]
+            term_xnors = [m.start() for m in re.finditer(re.escape("~"), implicant)]
+            term_dcs = [m.start() for m in re.finditer(re.escape("-"), implicant)]
             return term_ones, term_zeros, term_xors, term_xnors, term_dcs
 
-        def complexity(implicant: str) -> float:    # Stub
+        def complexity(implicant: str) -> float:  # Stub
             ret: float = 0
             term_ones, term_zeros, term_xors, term_xnors, _ = get_terms(implicant)
             ret += 1.00 * len(term_ones)
@@ -622,7 +611,8 @@ class QuineMcCluskey:
             for index in b_term_dcs:
                 b_potential[index] = a[index]
             valid = [
-                x for x in [''.join(a_potential), ''.join(b_potential)]
+                x
+                for x in ["".join(a_potential), "".join(b_potential)]
                 if self.permutations(x, exclude=dc) == (permutations_a | permutations_b)
             ]
             if valid:
@@ -654,7 +644,8 @@ class QuineMcCluskey:
                 others_coverage = {
                     n
                     for other_implicant in [
-                        implicant for implicant in coverage.keys()
+                        implicant
+                        for implicant in coverage.keys()
                         if implicant != this_implicant
                     ]
                     for n in coverage[other_implicant]
@@ -667,5 +658,5 @@ class QuineMcCluskey:
             else:
                 break
         if not coverage:
-            coverage = {'-'*self.n_bits: set()}
+            coverage = {"-" * self.n_bits: set()}
         return set(coverage.keys())
