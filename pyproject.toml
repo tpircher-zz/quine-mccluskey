@@ -32,8 +32,6 @@ dynamic = ["readme"]
 "Homepage" = "https://github.com/pypa/sampleproject"
 "Bug Tracker" = "https://github.com/pypa/sampleproject/issues"
 
-
-
 [tool.setuptools.dynamic]
 readme = {file = ["README.md"]}
 

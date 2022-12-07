@@ -1,6 +1,6 @@
 import time
 import pytest
-from quine_mccluskey.qm import QuineMcCluskey
+from quine_mccluskey_tomas789.qm import QuineMcCluskey
 
 
 # generate_input
