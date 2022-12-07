@@ -1,11 +1,9 @@
 import time
 from typing import Set
 import pytest
-from quine_mccluskey_tomas789 import simplify_los, simplify, qm
+from quine_mccluskey_tomas789 import qm
 
 
-# generate_input
-###############################################################################
 def generate_input(s_terms) -> Set[str]:
     """
     generate input for a desired result
@@ -18,8 +16,6 @@ def generate_input(s_terms) -> Set[str]:
     return res
 
 
-# format_set
-###############################################################################
 def format_set(s: Set[str]) -> str:
     """
     Format a set of strings.
@@ -34,8 +30,6 @@ def format_set(s: Set[str]) -> str:
     return ret
 
 
-# run function
-###############################################################################
 def run(test, use_xor: bool):
     """
     Run function

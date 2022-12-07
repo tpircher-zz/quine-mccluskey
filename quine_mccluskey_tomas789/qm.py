@@ -22,6 +22,8 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 
 class ResultWithProfile:
+    """A wrapper around minimization results with profiling stats."""
+
     none: ResultWithProfile
 
     def __init__(self, result: Optional[Set[str]], profile_cmp: int, profile_xor: int, profile_xnor: int):
@@ -444,7 +446,15 @@ def get_terms(implicant: str) -> Tuple[List[int], List[int], List[int], List[int
     return term_ones, term_zeros, term_xors, term_xnors, term_dcs
 
 
-def complexity(implicant: str) -> float:  # Stub
+def complexity(implicant: str) -> float:
+    """Helper function deternining the order of the implicants.
+
+    Args:
+        implicant (str): Implicant
+
+    Returns:
+        float: Estimated complexity.
+    """
     ret: float = 0
     term_ones, term_zeros, term_xors, term_xnors, _ = get_terms(implicant)
     ret += 1.00 * len(term_ones)
@@ -455,6 +465,16 @@ def complexity(implicant: str) -> float:  # Stub
 
 
 def combine_implicants(a: str, b: str, dc: Set[str]) -> Optional[str]:
+    """Combine two implicants.
+
+    Args:
+        a (str): First implicant.
+        b (str): Second implicant.
+        dc (Set[str]): Don't care set.
+
+    Returns:
+        Optional[str]: Combined implicants. None if invalid.
+    """
     permutations_a = set(permutations(a, exclude=dc))
     permutations_b = set(permutations(b, exclude=dc))
     _, _, _, _, a_term_dcs = get_terms(a)
@@ -475,6 +495,16 @@ def combine_implicants(a: str, b: str, dc: Set[str]) -> Optional[str]:
 
 
 def reduce_implicants(n_bits: int, implicants: Set[str], dc: Set[str]) -> Set[str]:
+    """Perform further reduction on essential implicants.
+
+    Args:
+        n_bits (int): Number of bits of the input.
+        implicants (Set[str]): Implicants
+        dc (Set[str]): Don't care set.
+
+    Returns:
+        Set[str]: Reduced implicants.
+    """
     # Combine implicants in orthogonal spaces
     while True:
         for a, b in itertools.combinations(implicants, 2):
@@ -516,6 +546,60 @@ def reduce_implicants(n_bits: int, implicants: Set[str], dc: Set[str]) -> Set[st
 def simplify_los_with_profile(
     ones: Iterable[str], dc: Iterable[str] = [], num_bits: Optional[int] = None, use_xor: bool = True
 ) -> ResultWithProfile:
+    """Implementation for the simplify_los function."""
+
+    terms: Set[str] = set(ones) | set(dc)
+    if len(terms) == 0:
+        return ResultWithProfile.none
+
+    # Calculate the number of bits to use
+    if num_bits is not None:
+        n_bits = num_bits
+    else:
+        n_bits = max(len(i) for i in terms)
+        if n_bits != min(len(i) for i in terms):
+            return ResultWithProfile.none
+
+    # First step of Quine-McCluskey method.
+    prime_implicants = get_prime_implicants(n_bits=n_bits, use_xor=use_xor, terms=terms)
+
+    # Remove essential terms.
+    assert prime_implicants.result is not None
+    essential_implicants = get_essential_implicants(n_bits=n_bits, terms=prime_implicants.result, dc=set(dc))
+
+    # Perform further reduction on essential implicants
+    reduced_implicants = reduce_implicants(n_bits=n_bits, implicants=essential_implicants, dc=set(dc))
+
+    return ResultWithProfile(
+        result=reduced_implicants,
+        profile_cmp=prime_implicants.profile_cmp,
+        profile_xor=prime_implicants.profile_xor,
+        profile_xnor=prime_implicants.profile_xnor,
+    )
+
+
+def simplify_with_profile(
+    ones: List[int], dc: List[int] = [], num_bits: Optional[int] = None, use_xor: bool = False
+) -> ResultWithProfile:
+    """Implementation for the simplify function."""
+    terms = ones + dc
+    if len(terms) == 0:
+        return ResultWithProfile.none
+
+    # Calculate the number of bits to use
+    # Needed internally by __num2str()
+    n_bits = num_bits
+    if n_bits is None:
+        n_bits = int(math.ceil(math.log(max(terms) + 1, 2)))
+
+    # Generate the sets of ones and dontcares
+    ones_processed = [num2str(n_bits, i) for i in ones]
+    dc_processed = [num2str(n_bits, i) for i in dc]
+
+    return simplify_los_with_profile(ones_processed, dc_processed, num_bits=num_bits, use_xor=use_xor)
+
+
+def simplify(ones: List[int], dc: List[int] = [], num_bits: Optional[int] = None, use_xor: bool = False) -> Optional[Set[str]]:
     """The simplification algorithm for a list of string-encoded inputs.
 
     Args:
@@ -554,39 +638,12 @@ def simplify_los_with_profile(
         This will produce the ouput: ['--^^'].
         In other words, x = b1 ^ b0, (bit1 XOR bit0).
     """
-    terms: Set[str] = set(ones) | set(dc)
-    if len(terms) == 0:
-        return ResultWithProfile.none
-
-    # Calculate the number of bits to use
-    if num_bits is not None:
-        n_bits = num_bits
-    else:
-        n_bits = max(len(i) for i in terms)
-        if n_bits != min(len(i) for i in terms):
-            return ResultWithProfile.none
-
-    # First step of Quine-McCluskey method.
-    prime_implicants = get_prime_implicants(n_bits=n_bits, use_xor=use_xor, terms=terms)
-
-    # Remove essential terms.
-    assert prime_implicants.result is not None
-    essential_implicants = get_essential_implicants(n_bits=n_bits, terms=prime_implicants.result, dc=set(dc))
-
-    # Perform further reduction on essential implicants
-    reduced_implicants = reduce_implicants(n_bits=n_bits, implicants=essential_implicants, dc=set(dc))
-
-    return ResultWithProfile(
-        result=reduced_implicants,
-        profile_cmp=prime_implicants.profile_cmp,
-        profile_xor=prime_implicants.profile_xor,
-        profile_xnor=prime_implicants.profile_xnor,
-    )
+    return simplify_with_profile(ones=ones, dc=dc, num_bits=num_bits, use_xor=use_xor).result
 
 
-def simplify_with_profile(
-    ones: List[int], dc: List[int] = [], num_bits: Optional[int] = None, use_xor: bool = False
-) -> ResultWithProfile:
+def simplify_los(
+    ones: Iterable[str], dc: Iterable[str] = [], num_bits: Optional[int] = None, use_xor: bool = False
+) -> Optional[Set[str]]:
     """Simplify a list of terms.
 
     Args:
@@ -614,28 +671,4 @@ def simplify_with_profile(
         This will produce the ouput: ['--^^'].
         In other words, x = b1 ^ b0, (bit1 XOR bit0).
     """
-    terms = ones + dc
-    if len(terms) == 0:
-        return ResultWithProfile.none
-
-    # Calculate the number of bits to use
-    # Needed internally by __num2str()
-    n_bits = num_bits
-    if n_bits is None:
-        n_bits = int(math.ceil(math.log(max(terms) + 1, 2)))
-
-    # Generate the sets of ones and dontcares
-    ones_processed = [num2str(n_bits, i) for i in ones]
-    dc_processed = [num2str(n_bits, i) for i in dc]
-
-    return simplify_los_with_profile(ones_processed, dc_processed, num_bits=num_bits, use_xor=use_xor)
-
-
-def simplify(ones: List[int], dc: List[int] = [], num_bits: Optional[int] = None, use_xor: bool = False) -> Optional[Set[str]]:
-    return simplify_with_profile(ones=ones, dc=dc, num_bits=num_bits, use_xor=use_xor).result
-
-
-def simplify_los(
-    ones: Iterable[str], dc: Iterable[str] = [], num_bits: Optional[int] = None, use_xor: bool = False
-) -> Optional[Set[str]]:
     return simplify_los_with_profile(ones=ones, dc=dc, num_bits=num_bits, use_xor=use_xor).result

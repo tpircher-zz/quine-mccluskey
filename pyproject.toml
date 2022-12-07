@@ -46,7 +46,8 @@ disable = [
     "too-many-locals", 
     "dangerous-default-value",
     "too-many-branches", 
-    "too-many-statements"
+    "too-many-statements",
+    "too-few-public-methods"
 ]
 
 [tool.distutils.bdist_wheel]

@@ -68,3 +68,7 @@ Wheel file can then be distributed via your own means and installed using pip
 ```bash
 python3 -m pip install dist/quine_mccluskey_tomas789-1.0-py2.py3-none-any.whl
 ```
+
+## Running tests
+
+
