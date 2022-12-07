@@ -8,6 +8,8 @@ find_package(pybind11 CONFIG)
 # Python method:
 Python_add_library(_qmc src/qmc.cpp)
 target_link_libraries(_qmc PRIVATE pybind11::headers)
+target_compile_features(_qmc PRIVATE cxx_std_17)
+
 set_target_properties(_qmc 
     PROPERTIES
     INTERPROCEDURAL_OPTIMIZATION ON

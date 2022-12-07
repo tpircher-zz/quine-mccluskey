@@ -40,33 +40,7 @@ ResultWithProfile.none = ResultWithProfile(result=None, profile_cmp=0, profile_x
 
 
 def reduce_simple_xor_terms(t1: str, t2: str) -> Optional[str]:
-    """Try to reduce two terms t1 and t2, by combining them as XOR terms.
-
-    Args:
-        t1 (str): a term.
-        t2 (str): a term.
-
-    Returns:
-        The reduced term or None if the terms cannot be reduced.
-    """
-    assert len(t1) == len(t2)
-    difft10: int = 0
-    difft20: int = 0
-    ret: List[str] = []
-    for (t1c, t2c) in zip(t1, t2):
-        if t1c == "^" or t2c == "^" or t1c == "~" or t2c == "~":
-            return None
-        if t1c != t2c:
-            ret.append("^")
-            if t2c == "0":
-                difft10 += 1
-            else:
-                difft20 += 1
-        else:
-            ret.append(t1c)
-    if difft10 == 1 and difft20 == 1:
-        return "".join(ret)
-    return None
+    return _qmc.reduce_simple_xor_terms(t1, t2)
 
 
 def reduce_simple_xnor_terms(t1: str, t2: str) -> Optional[str]:
