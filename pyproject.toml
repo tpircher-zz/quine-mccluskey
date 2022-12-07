@@ -51,3 +51,12 @@ disable = [
 
 [tool.distutils.bdist_wheel]
 universal = true
+
+[tool.pyright]
+
+[tool.flake8]
+max-line-length = 127
+
+[tool.black]
+line-length = 127
+target-version = ['py37', 'py38', 'py39', 'py310', 'py311']
