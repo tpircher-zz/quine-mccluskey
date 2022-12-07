@@ -84,6 +84,11 @@ pytest
 We also have a fuzz testing. It generates random formulas, simplifies them and checks that the result is correct. 
 
 ```bash
-python3 fuzz.py
+➜  quine-mccluskey-tomas789 git:(main) python fuzz.py   
+Checked 24300 formulas and found 0 errors.
+Checked 48400 formulas and found 0 errors.
+Checked 72300 formulas and found 0 errors.
+Checked 96300 formulas and found 0 errors.
+Testing formulas ... ⠋ 0:00:44
 ```
 
