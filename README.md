@@ -1,6 +1,9 @@
 qm.py
 =====
 
+![build](https://github.com/tomas789/quine-mccluskey-tomas789/actions/workflows/python-package.yml/badge.svg)
+
+
 A Python implementation of the Quine McCluskey algorithm.
 
 This implementation of the Quine McCluskey algorithm has no inherent limits
