@@ -43,7 +43,7 @@ from __future__ import print_function
 import itertools
 import math
 import re
-from typing import List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 
 class QuineMcCluskey:
@@ -304,7 +304,7 @@ class QuineMcCluskey:
                                 terms.add(t12)
 
         done = False
-        groups: dict[tuple[int, int, int], Set[str]] = {}
+        groups: Dict[Tuple[int, int, int], Set[str]] = {}
         while not done:
             # Group terms into groups.
             # groups is a list of length n_groups.
@@ -413,7 +413,7 @@ class QuineMcCluskey:
         """
 
         # Create all permutations for each term in terms.
-        perms: dict[str, Set[str]] = {}
+        perms: Dict[str, Set[str]] = {}
         for t in terms:
             perms[t] = set(p for p in self.permutations(t) if p not in dc)
 
@@ -421,7 +421,7 @@ class QuineMcCluskey:
         # by a combination of terms.
         ei_range: Set[str] = set()
         ei: Set[str] = set()
-        groups: dict[int, Set[str]] = {}
+        groups: Dict[int, Set[str]] = {}
         for t1 in terms:
             n = self.__get_term_rank(t1, len(perms[t1]))
             if n not in groups:
@@ -632,7 +632,7 @@ class QuineMcCluskey:
                 break
 
         # Reduce redundant implicants further by comparing their coverage
-        coverage: dict[str, Set[str]] = {
+        coverage: Dict[str, Set[str]] = {
             implicant: {n for n in self.permutations(implicant) if n not in dc}
             for implicant in implicants
         }
