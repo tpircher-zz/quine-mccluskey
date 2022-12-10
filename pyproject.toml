@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm", "cython"]
+requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,6 +9,7 @@ requires-python = ">=3.7"
 keywords = ["Quine McCluskey", "XOR"]
 license = {text = "BSD"}
 readme = "README.md"
+version = "0.2"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Topic :: Utilities",
@@ -26,19 +27,9 @@ classifiers = [
     "Topic :: System :: Hardware",
     "Typing :: Typed",
 ]
-dynamic = ["version"]
 
 [project.urls]
 "Homepage" = "https://github.com/tomas789/quine-mccluskey-tomas789"
-
-[tool.setuptools]
-py-modules = ["_custom_build"]
-
-[tool.setuptools.cmdclass]
-build_py = "_custom_build.build_py"
-
-[tool.setuptools.dynamic]
-version = {attr = "quine_mccluskey_tomas789._version.__version__"}
 
 [tool.setuptools_scm]
 write_to = "quine_mccluskey_tomas789/_version.py"

@@ -154,7 +154,7 @@ def main():
         for i in range(infinity):
             ones_formula = make_random_fromula(n_bits=n_bits, max_depth=2)
             dontcare_formula = make_random_fromula(n_bits=n_bits, max_depth=2)
-            # dontcare_formula = FALSE
+            dontcare_formula = FALSE
             has_error = check_qmc(n_bits=n_bits, ones_formula=ones_formula, dontcare_formula=dontcare_formula)
             if has_error:
                 error_counter += 1
@@ -166,4 +166,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass

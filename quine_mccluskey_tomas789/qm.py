@@ -1,23 +1,7 @@
-"""An implementation of the Quine McCluskey algorithm.
-
-This implementation of the Quine McCluskey algorithm has no inherent limits
-(other than the calculation time) on the size of the inputs.
-
-Also, in the limited tests of the author of this module, this implementation is
-considerably faster than other public Python implementations for non-trivial
-inputs.
-
-Another unique feature of this implementation is the possibility to use the XOR
-and XNOR operators, in addition to the normal AND operator, to minimise the
-terms. This slows down the algorithm, but in some cases it can be a big win in
-terms of complexity of the output.
-"""
-
 from __future__ import print_function, annotations
 
 import itertools
 import math
-import re
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import sys
@@ -49,6 +33,16 @@ def reduce_simple_xnor_terms(t1: str, t2: str) -> Optional[str]:
     return _qmc.reduce_simple_xnor_terms(t1, t2)
 
 
+def massert(name, cpp, py):
+    value_py = py[name]
+    value_cpp = getattr(cpp, name)
+    if value_py == value_cpp:
+        return
+    print(f"ASSERT FAILED {name}: ")
+    print(f"  PY: {value_py}")
+    print(f" C++: {value_cpp}")
+    sys.exit(1)
+
 def get_prime_implicants(n_bits: int, use_xor: bool, terms: Set[str]) -> ResultWithProfile:
     """Simplify the set 'terms'.
 
@@ -63,172 +57,13 @@ def get_prime_implicants(n_bits: int, use_xor: bool, terms: Set[str]) -> ResultW
     This is the very first step in the Quine McCluskey algorithm. This
     generates all prime implicants, whether they are redundant or not.
     """
-    profile_cmp = 0
-    profile_xor = 0
-    profile_xnor = 0
-
-    # Sort and remove duplicates.
-    n_groups = n_bits + 1
-    marked = set()
-
-    # Group terms into the list groups.
-    # groups is a list of length n_groups.
-    # Each element of groups is a set of terms with the same number
-    # of ones.  In other words, each term contained in the set
-    # groups[i] contains exactly i ones.
-    groups_1: List[Set[str]] = [set() for i in range(n_groups)]
-    for t in terms:
-        n_bits = t.count("1")
-        groups_1[n_bits].add(t)
-    if use_xor:
-        # Add 'simple' XOR and XNOR terms to the set of terms.
-        # Simple means the terms can be obtained by combining just two
-        # bits.
-        for gi, group in enumerate(groups_1):
-            for t1 in group:
-                for t2 in group:
-                    t12 = reduce_simple_xor_terms(t1, t2)
-                    if t12 is not None:
-                        terms.add(t12)
-                if gi < n_groups - 2:
-                    for t2 in groups_1[gi + 2]:
-                        t12 = reduce_simple_xnor_terms(t1, t2)
-                        if t12 is not None:
-                            terms.add(t12)
-
-    done = False
-    groups: Dict[Tuple[int, int, int], Set[str]] = {}
-    while not done:
-        # Group terms into groups.
-        # groups is a list of length n_groups.
-        # Each element of groups is a set of terms with the same
-        # number of ones.  In other words, each term contained in the
-        # set groups[i] contains exactly i ones.
-        groups = {}
-        for t in terms:
-            n_ones = t.count("1")
-            n_xor = t.count("^")
-            n_xnor = t.count("~")
-            # The algorithm can not cope with mixed XORs and XNORs in
-            # one expression.
-            assert n_xor == 0 or n_xnor == 0
-
-            key = (n_ones, n_xor, n_xnor)
-            if key not in groups:
-                groups[key] = set()
-            groups[key].add(t)
-
-        terms = set()  # The set of new created terms
-        used = set()  # The set of used terms
-
-        # Find prime implicants
-        for key in groups:  # pylint: disable=consider-using-dict-items
-            key_next = (key[0] + 1, key[1], key[2])
-            if key_next in groups:
-                group_next = groups[key_next]
-                for t1 in groups[key]:
-                    # Optimisation:
-                    # The Quine-McCluskey algorithm compares t1 with
-                    # each element of the next group. (Normal approach)
-                    # But in reality it is faster to construct all
-                    # possible permutations of t1 by adding a '1' in
-                    # opportune positions and check if this new term is
-                    # contained in the set groups[key_next].
-                    for i, c1 in enumerate(t1):
-                        if c1 == "0":
-                            profile_cmp += 1
-                            t2 = t1[:i] + "1" + t1[i + 1 :]
-                            if t2 in group_next:
-                                t12 = t1[:i] + "-" + t1[i + 1 :]
-                                used.add(t1)
-                                used.add(t2)
-                                terms.add(t12)
-
-        # Find XOR combinations
-        for key in [k for k in groups if k[1] > 0]:
-            key_complement = (key[0] + 1, key[2], key[1])
-            if key_complement in groups:
-                for t1 in groups[key]:
-                    t1_complement = t1.replace("^", "~")
-                    for i, c1 in enumerate(t1):
-                        if c1 == "0":
-                            profile_xor += 1
-                            t2 = t1_complement[:i] + "1" + t1_complement[i + 1 :]
-                            if t2 in groups[key_complement]:
-                                t12 = t1[:i] + "^" + t1[i + 1 :]
-                                used.add(t1)
-                                terms.add(t12)
-        # Find XNOR combinations
-        for key in [k for k in groups if k[2] > 0]:
-            key_complement = (key[0] + 1, key[2], key[1])
-            if key_complement in groups:
-                for t1 in groups[key]:
-                    t1_complement = t1.replace("~", "^")
-                    for i, c1 in enumerate(t1):
-                        if c1 == "0":
-                            profile_xnor += 1
-                            t2 = t1_complement[:i] + "1" + t1_complement[i + 1 :]
-                            if t2 in groups[key_complement]:
-                                t12 = t1[:i] + "~" + t1[i + 1 :]
-                                used.add(t1)
-                                terms.add(t12)
-
-        # Add the unused terms to the list of marked terms
-        for g in list(groups.values()):
-            marked |= g - used
-
-        if len(used) == 0:
-            done = True
-
-    # Prepare the list of prime implicants
-    pi = marked
-    for g in list(groups.values()):
-        pi |= g
-    return ResultWithProfile(result=pi, profile_cmp=profile_cmp, profile_xor=profile_xor, profile_xnor=profile_xnor)
+    r = _qmc.get_prime_implicants(n_bits, use_xor, terms)
+    
+    return ResultWithProfile(result=r.result, profile_cmp=r.profile_cmp, profile_xor=r.profile_xor, profile_xnor=r.profile_xnor)
 
 
 def get_essential_implicants(n_bits: int, terms: Set[str], dc: Set[str]) -> Set[str]:
-    """Simplify the set 'terms'.
-
-    Args:
-        terms (set of str): set of strings representing the minterms of
-        ones and dontcares.
-        dc (set of str): set of strings representing the dontcares.
-
-    Returns:
-        A list of prime implicants. These are the minterms that cannot be
-        reduced with step 1 of the Quine McCluskey method.
-
-    This function is usually called after __get_prime_implicants and its
-    objective is to remove non-essential minterms.
-
-    In reality this function omits all terms that can be covered by at
-    least one other term in the list.
-    """
-
-    # Create all permutations for each term in terms.
-    perms: Dict[str, Set[str]] = {}
-    for t in terms:
-        perms[t] = set(p for p in permutations(t) if p not in dc)
-
-    # Now group the remaining terms and see if any term can be covered
-    # by a combination of terms.
-    ei_range: Set[str] = set()
-    ei: Set[str] = set()
-    groups: Dict[int, Set[str]] = {}
-    for t1 in terms:
-        n = get_term_rank(t1, len(perms[t1]))
-        if n not in groups:
-            groups[n] = set()
-        groups[n].add(t1)
-    for t2 in sorted(list(groups.keys()), reverse=True):
-        for g in sorted(groups[t2], reverse=True):
-            if not perms[g] <= ei_range:
-                ei.add(g)
-                ei_range |= perms[g]
-    if len(ei) == 0:
-        ei = set(["-" * n_bits])
-    return ei
+    return _qmc.get_essential_implicants(n_bits, terms, dc)
 
 
 def get_term_rank(term: str, term_range: int) -> int:
@@ -240,238 +75,39 @@ def permutations(value: str = "", exclude: Set[str] = set()) -> Set[str]:
 
 
 def get_terms(implicant: str) -> Tuple[List[int], List[int], List[int], List[int], List[int]]:
-    """Return the indexes for each type of token in given implicant string"""
-    term_ones = [m.start() for m in re.finditer(re.escape("1"), implicant)]
-    term_zeros = [m.start() for m in re.finditer(re.escape("0"), implicant)]
-    term_xors = [m.start() for m in re.finditer(re.escape("^"), implicant)]
-    term_xnors = [m.start() for m in re.finditer(re.escape("~"), implicant)]
-    term_dcs = [m.start() for m in re.finditer(re.escape("-"), implicant)]
-    return term_ones, term_zeros, term_xors, term_xnors, term_dcs
+    return _qmc.get_terms(implicant)
 
 
 def complexity(implicant: str) -> float:
-    """Helper function deternining the order of the implicants.
-
-    Args:
-        implicant (str): Implicant
-
-    Returns:
-        float: Estimated complexity.
-    """
-    ret: float = 0
-    term_ones, term_zeros, term_xors, term_xnors, _ = get_terms(implicant)
-    ret += 1.00 * len(term_ones)
-    ret += 1.50 * len(term_zeros)
-    ret += 1.25 * len(term_xors)
-    ret += 1.75 * len(term_xnors)
-    return ret
+    return _qmc.complexity(implicant)
 
 
 def combine_implicants(a: str, b: str, dc: Set[str]) -> Optional[str]:
-    """Combine two implicants.
-
-    Args:
-        a (str): First implicant.
-        b (str): Second implicant.
-        dc (Set[str]): Don't care set.
-
-    Returns:
-        Optional[str]: Combined implicants. None if invalid.
-    """
-    permutations_a = set(permutations(a, exclude=dc))
-    permutations_b = set(permutations(b, exclude=dc))
-    _, _, _, _, a_term_dcs = get_terms(a)
-    _, _, _, _, b_term_dcs = get_terms(b)
-    a_potential, b_potential = list(a), list(b)
-    for index in a_term_dcs:
-        a_potential[index] = b[index]
-    for index in b_term_dcs:
-        b_potential[index] = a[index]
-    valid = [
-        x
-        for x in ["".join(a_potential), "".join(b_potential)]
-        if permutations(x, exclude=dc) == (permutations_a | permutations_b)
-    ]
-    if valid:
-        return min(valid, key=complexity)
-    return None
+    return _qmc.combine_implicants(a, b, dc)
 
 
 def reduce_implicants(n_bits: int, implicants: Set[str], dc: Set[str]) -> Set[str]:
-    """Perform further reduction on essential implicants.
-
-    Args:
-        n_bits (int): Number of bits of the input.
-        implicants (Set[str]): Implicants
-        dc (Set[str]): Don't care set.
-
-    Returns:
-        Set[str]: Reduced implicants.
-    """
-    # Combine implicants in orthogonal spaces
-    while True:
-        for a, b in itertools.combinations(implicants, 2):
-            replacement = combine_implicants(a, b, dc=dc)
-            if replacement:
-                implicants.remove(a)
-                implicants.remove(b)
-                implicants |= {replacement}
-                break
-        else:
-            break
-
-    # Reduce redundant implicants further by comparing their coverage
-    coverage: Dict[str, Set[str]] = {
-        implicant: {n for n in permutations(implicant) if n not in dc} for implicant in implicants
-    }
-
-    while True:
-        redundant = []
-        for this_implicant in list(coverage):
-            this_coverage = coverage[this_implicant]
-            others_coverage = {
-                n
-                for other_implicant in [implicant for implicant in coverage.keys() if implicant != this_implicant]
-                for n in coverage[other_implicant]
-            }
-            if this_coverage.issubset(others_coverage):
-                redundant.append(this_implicant)
-        if redundant:
-            worst = max(redundant, key=complexity)
-            del coverage[worst]
-        else:
-            break
-    if not coverage:
-        coverage = {"-" * n_bits: set()}
-    return set(coverage.keys())
+    return _qmc.reduce_implicants(n_bits, implicants, dc)
 
 
 def simplify_los_with_profile(
     ones: Iterable[str], dc: Iterable[str] = [], num_bits: Optional[int] = None, use_xor: bool = True
 ) -> ResultWithProfile:
     """Implementation for the simplify_los function."""
-
-    terms: Set[str] = set(ones) | set(dc)
-    if len(terms) == 0:
-        return ResultWithProfile.none
-
-    # Calculate the number of bits to use
-    if num_bits is not None:
-        n_bits = num_bits
-    else:
-        n_bits = max(len(i) for i in terms)
-        if n_bits != min(len(i) for i in terms):
-            return ResultWithProfile.none
-
-    # First step of Quine-McCluskey method.
-    prime_implicants = get_prime_implicants(n_bits=n_bits, use_xor=use_xor, terms=terms)
-
-    # Remove essential terms.
-    assert prime_implicants.result is not None
-    essential_implicants = get_essential_implicants(n_bits=n_bits, terms=prime_implicants.result, dc=set(dc))
-
-    # Perform further reduction on essential implicants
-    reduced_implicants = reduce_implicants(n_bits=n_bits, implicants=essential_implicants, dc=set(dc))
-
-    return ResultWithProfile(
-        result=reduced_implicants,
-        profile_cmp=prime_implicants.profile_cmp,
-        profile_xor=prime_implicants.profile_xor,
-        profile_xnor=prime_implicants.profile_xnor,
-    )
+    return _qmc.simplify_los_with_profile(list(ones), list(dc), num_bits, use_xor)
 
 
 def simplify_with_profile(
     ones: List[int], dc: List[int] = [], num_bits: Optional[int] = None, use_xor: bool = False
 ) -> ResultWithProfile:
-    """Implementation for the simplify function."""
-    terms = ones + dc
-    if len(terms) == 0:
-        return ResultWithProfile.none
-
-    # Calculate the number of bits to use
-    # Needed internally by __num2str()
-    n_bits = num_bits
-    if n_bits is None:
-        n_bits = int(math.ceil(math.log(max(terms) + 1, 2)))
-
-    # Generate the sets of ones and dontcares
-    ones_processed: List[str] = [_qmc.num2str(n_bits, i) for i in ones]
-    dc_processed: List[str] = [_qmc.num2str(n_bits, i) for i in dc]
-
-    return simplify_los_with_profile(ones_processed, dc_processed, num_bits=num_bits, use_xor=use_xor)
+    return _qmc.simplify_with_profile(ones, dc, num_bits, use_xor)
 
 
 def simplify(ones: List[int], dc: List[int] = [], num_bits: Optional[int] = None, use_xor: bool = False) -> Optional[Set[str]]:
-    """The simplification algorithm for a list of string-encoded inputs.
-
-    Args:
-        ones (list of str): list of strings that describe when the output
-        function is '1', e.g. ['0001', '0010', '0110', '1000', '1111'].
-
-    Kwargs:
-        dc: (list of str): list of strings that define the don't care
-        combinations.
-
-    Returns:
-        Returns a set of strings which represent the reduced minterms.  The
-        length of the strings is equal to the number of bits in the input.
-        Character 0 of the output string stands for the most significant
-        bit, Character n - 1 (n is the number of bits) stands for the least
-        significant bit.
-
-        The following characters are allowed in the return string:
-            '-' don't care: this bit can be either zero or one.
-            '1' the bit must be one.
-            '0' the bit must be zero.
-            '^' all bits with the caret are XOR-ed together.
-            '~' all bits with the tilde are XNOR-ed together.
-
-    Example:
-        ones = ['0010', '0110', '1010', '1110']
-        dc = []
-
-        This will produce the ouput: ['--10'].
-        In other words, x = b1 & ~b0, (bit1 AND NOT bit0).
-
-    Example:
-        ones = ['0001', '0010', '0101', '0110', '1001', '1010' '1101', '1110']
-        dc = []
-
-        This will produce the ouput: ['--^^'].
-        In other words, x = b1 ^ b0, (bit1 XOR bit0).
-    """
-    return simplify_with_profile(ones=ones, dc=dc, num_bits=num_bits, use_xor=use_xor).result
+    return _qmc.simplify(ones, dc, num_bits, use_xor)
 
 
 def simplify_los(
     ones: Iterable[str], dc: Iterable[str] = [], num_bits: Optional[int] = None, use_xor: bool = False
 ) -> Optional[Set[str]]:
-    """Simplify a list of terms.
-
-    Args:
-        ones (list of int): list of integers that describe when the output
-        function is '1', e.g. [1, 2, 6, 8, 15].
-
-    Kwargs:
-        dc (list of int): list of numbers for which we don't care if they
-        have one or zero in the output.
-
-    Returns:
-        see: simplify_los.
-
-    Example:
-        ones = [2, 6, 10, 14]
-        dc = []
-
-        This will produce the ouput: ['--10']
-        This means x = b1 & ~b0, (bit1 AND NOT bit0)
-
-    Example:
-        ones = [1, 2, 5, 6, 9, 10, 13, 14]
-        dc = []
-
-        This will produce the ouput: ['--^^'].
-        In other words, x = b1 ^ b0, (bit1 XOR bit0).
-    """
-    return simplify_los_with_profile(ones=ones, dc=dc, num_bits=num_bits, use_xor=use_xor).result
+    return _qmc.simplify_los(ones, dc, num_bits, use_xor)

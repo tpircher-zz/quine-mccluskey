@@ -135,3 +135,4 @@ def test_true():
 def test_false_with_dontcare():
     result = qm.simplify_los(ones=[], dc=["11"], num_bits=2, use_xor=False)
     assert result == {"--"}
+
